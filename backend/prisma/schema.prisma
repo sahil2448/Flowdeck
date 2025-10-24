@@ -1,93 +1,189 @@
-generator client {
-  provider = "prisma-client-js"
-}
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
-model User {
-  id           String        @id @default(cuid())
-  name         String?
-  email        String        @unique
-  passwordHash String
-  avatarUrl    String?
-  workspaces   Workspace[]   @relation("WorkspaceOwner")
-  memberships  Membership[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
-model Workspace {
-  id         String       @id @default(cuid())
-  name       String
-  ownerId    String
-  owner      User         @relation("WorkspaceOwner", fields: [ownerId], references: [id])
-  memberships Membership[]
-  boards     Board[]
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+
+model Tenant {
+  id            String   @id @default(uuid())
+  name          String
+  slug          String   @unique
+  plan          String   @default("free")
+  stripeCustomerId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  users         User[]
+  boards        Board[]
+  activityEvents ActivityEvent[]
+
+  @@map("tenants")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String?
+  passwordHash  String
+  tenantId      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  memberships   Membership[]
+  comments      Comment[]
+  activities    ActivityEvent[]
+
+  @@index([tenantId])
+  @@map("users")
 }
 
 model Membership {
-  id          String     @id @default(cuid())
-  workspace   Workspace  @relation(fields: [workspaceId], references: [id])
-  workspaceId String
-  user        User       @relation(fields: [userId], references: [id])
-  userId      String
-  role        String     @default("member") // owner, admin, member, guest
-  createdAt   DateTime   @default(now())
+  id        String   @id @default(uuid())
+  userId    String
+  boardId   String
+  role      String   @default("member") // owner, admin, member
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, boardId])
+  @@index([boardId])
+  @@map("memberships")
 }
 
 model Board {
-  id          String    @id @default(cuid())
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
-  workspaceId String
+  id          String   @id @default(uuid())
   title       String
   description String?
-  createdById String
-  createdBy   User      @relation(fields: [createdById], references: [id])
+  tenantId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   lists       List[]
-  archived    Boolean   @default(false)
-  position    Float     @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  memberships Membership[]
+  tags        Tag[]
+
+  @@index([tenantId])
+  @@map("boards")
 }
 
 model List {
-  id        String   @id @default(cuid())
-  board     Board    @relation(fields: [boardId], references: [id])
-  boardId   String
+  id        String   @id @default(uuid())
   title     String
-  position  Float    @default(0)
-  cards     Card[]
+  boardId   String
+  position  Int      // for ordering
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards     Card[]
+
+  @@index([boardId, position])
+  @@map("lists")
 }
 
 model Card {
-  id          String   @id @default(cuid())
-  list        List     @relation(fields: [listId], references: [id])
-  listId      String
+  id          String   @id @default(uuid())
   title       String
   description String?
-  position    Float    @default(0)
-  dueDate     DateTime?
-  assigneeId  String?
-  assignee    User?    @relation(fields: [assigneeId], references: [id])
-  createdById String
-  createdBy   User     @relation(fields: [createdById], references: [id])
+  listId      String
+  position    Int      // fractional ranking or int
+  version     Int      @default(0) // for optimistic locking
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  list        List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  comments    Comment[]
+  cardTags    CardTag[]
+  attachments Attachment[]
+
+  @@index([listId, position])
+  @@map("cards")
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String
+  color     String   @default("#gray")
+  boardId   String
+  createdAt DateTime @default(now())
+
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cardTags  CardTag[]
+
+  @@unique([boardId, name])
+  @@map("tags")
+}
+
+model CardTag {
+  id      String @id @default(uuid())
+  cardId  String
+  tagId   String
+
+  card    Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, tagId])
+  @@index([tagId])
+  @@map("card_tags")
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  card      Card     @relation(fields: [cardId], references: [id])
-  cardId    String
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
+  id        String   @id @default(uuid())
   content   String
+  cardId    String
+  userId    String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+  @@map("comments")
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  filename  String
+  url       String
+  cardId    String
+  createdAt DateTime @default(now())
+
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+  @@map("attachments")
+}
+
+model ActivityEvent {
+  id          String   @id @default(uuid())
+  tenantId    String
+  userId      String
+  boardId     String?
+  cardId      String?
+  action      String   // created, moved, updated, deleted
+  metadata    Json?    // flexible payload
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@index([boardId])
+  @@map("activity_events")
 }

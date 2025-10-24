@@ -1,32 +1,42 @@
-version: "3.8"
+version: '3.8'
 
 services:
   postgres:
     image: postgres:15
+    container_name: flowdeck_postgres
     restart: always
     environment:
       POSTGRES_USER: sahil
       POSTGRES_PASSWORD: password
       POSTGRES_DB: flowdeck_db
-    volumes:
-      - pgdata:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+    - '5433:5432'  # Changed from 5432:5432
+    volumes:
+    - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U sahil -d flowdeck_db']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - app-network
+
 
   redis:
-    image: redis:7
-    command: ["redis-server", "--appendonly", "yes"]
-    ports:
-      - "6379:6379"
-    volumes:
-      - redisdata:/data
-
-  adminer:
-    image: adminer
+    image: redis:7-alpine
+    container_name: flowdeck_redis
     restart: always
     ports:
-      - "8080:8080"
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
 
 volumes:
-  pgdata:
-  redisdata:
+  postgres_data:
+  redis_data:
+
+networks:
+  app-network:
+    driver: bridge
