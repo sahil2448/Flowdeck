@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { hashPassword, comparePassword } from '../utils/password';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 
 export async function register(req: Request, res: Response) {
   try {
@@ -218,23 +218,23 @@ export async function getMe(req: Request, res: Response) {
       });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { tenant: true },
+   const user = await prisma.user.findUnique({
+  where: { id: userId },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    createdAt: true,
+    tenant: {
       select: {
         id: true,
-        email: true,
         name: true,
-        createdAt: true,
-        tenant: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
+        slug: true,
       },
-    });
+    },
+  },
+});
+
 
     if (!user) {
       return res.status(404).json({
