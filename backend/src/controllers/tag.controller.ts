@@ -319,6 +319,8 @@ export async function assignTagToCard(req: Request, res: Response) {
       userId: req.user!.userId,
       boardId: cardWithBoard!.list.boardId,
       cardId: cardId,
+        tenantId: tenantId,  // ✅ Add this everywhere
+
       metadata: {
         tagName: tag!.name,
         tagColor: tag!.color,

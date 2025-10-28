@@ -76,6 +76,8 @@ export async function createComment(req: Request, res: Response) {
       userId: userId!,
       boardId: cardWithBoard!.list.boardId,
       cardId: cardId,
+        tenantId: tenantId,  // ✅ Add this everywhere
+
       metadata: {
         commentPreview: content.substring(0, 100),
       },

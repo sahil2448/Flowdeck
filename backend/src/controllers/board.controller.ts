@@ -37,6 +37,8 @@ export async function createBoard(req: Request, res: Response) {
       type: ActivityType.BOARD_CREATED,
       userId: userId!,
       boardId: board.id,
+        tenantId: tenantId,  // ✅ Add this everywhere
+
       metadata: {
         boardTitle: board.title,
       },
@@ -196,6 +198,8 @@ export async function updateBoard(req: Request, res: Response) {
   type: ActivityType.BOARD_UPDATED,
   userId: userId!,
   boardId: board.id,
+    tenantId: tenantId,  // ✅ Add this everywhere
+
   metadata: {
     changes: { title, description },
   },
@@ -248,6 +252,8 @@ export async function deleteBoard(req: Request, res: Response) {
   type: ActivityType.BOARD_DELETED,
   userId: userId!,
   boardId: id,
+    tenantId: tenantId,  // ✅ Add this everywhere
+
   metadata: {
     boardTitle: existingBoard.title,
   },

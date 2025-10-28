@@ -63,6 +63,8 @@ export async function createCard(req: Request, res: Response) {
       boardId: list.boardId,
       cardId: card.id,
       listId: list.id,
+        tenantId: tenantId,  // ✅ Add this everywhere
+
       metadata: {
         cardTitle: card.title,
         listTitle: list.title,
@@ -283,6 +285,8 @@ export async function updateCard(req: Request, res: Response) {
         boardId: newList!.boardId,
         cardId: card.id,
         listId: listId,
+          tenantId: tenantId,  // ✅ Add this everywhere
+
         metadata: {
           cardTitle: card.title,
           fromList: oldList?.title,
@@ -301,6 +305,8 @@ export async function updateCard(req: Request, res: Response) {
         boardId: list!.boardId,
         cardId: card.id,
         listId: existingCard.listId,
+          tenantId: tenantId,  // ✅ Add this everywhere
+
         metadata: {
           cardTitle: card.title,
           changes: { title, description },

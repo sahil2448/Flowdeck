@@ -21,6 +21,7 @@ export enum ActivityType {
 interface LogActivityParams {
   type: ActivityType;
   userId: string;
+  tenantId: string;  // ✅ Add this
   boardId: string;
   cardId?: string | null;
   listId?: string | null;
@@ -33,6 +34,7 @@ export async function logActivity(params: LogActivityParams) {
       data: {
         type: params.type,
         userId: params.userId,
+        tenantId: params.tenantId,  // ✅ Add this
         boardId: params.boardId,
         cardId: params.cardId || null,
         listId: params.listId || null,
@@ -40,7 +42,6 @@ export async function logActivity(params: LogActivityParams) {
       },
     });
   } catch (error) {
-    // Log but don't throw - activity logging shouldn't break main flow
     console.error('Activity logging error:', error);
   }
 }
