@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
+import { logActivity, ActivityType } from '../services/activity.service'; // Add this import
+
 
 // Create a new board
 export async function createBoard(req: Request, res: Response) {
@@ -28,6 +30,15 @@ export async function createBoard(req: Request, res: Response) {
         description: description || null,
         tenantId,
         // createdById: userId,
+      },
+    });
+
+        await logActivity({
+      type: ActivityType.BOARD_CREATED,
+      userId: userId!,
+      boardId: board.id,
+      metadata: {
+        boardTitle: board.title,
       },
     });
 
@@ -146,8 +157,10 @@ export async function updateBoard(req: Request, res: Response) {
     const { id } = req.params;
     const { title, description } = req.body;
     const tenantId = req.user?.tenantId;
+        const userId = req.user?.userId; // ✅ Add this line
 
-    if (!tenantId) {
+
+    if (!tenantId || !userId) { // ✅ Check userId too
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'User not authenticated',
@@ -179,6 +192,15 @@ export async function updateBoard(req: Request, res: Response) {
       },
     });
 
+    await logActivity({
+  type: ActivityType.BOARD_UPDATED,
+  userId: userId!,
+  boardId: board.id,
+  metadata: {
+    changes: { title, description },
+  },
+});
+
     res.status(200).json({
       message: 'Board updated successfully',
       board,
@@ -197,8 +219,10 @@ export async function deleteBoard(req: Request, res: Response) {
   try {
     const { id } = req.params;
     const tenantId = req.user?.tenantId;
+        const userId = req.user?.userId; // ✅ Add this line
 
-    if (!tenantId) {
+
+    if (!tenantId || !userId) { // ✅ Check userId too
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'User not authenticated',
@@ -219,6 +243,15 @@ export async function deleteBoard(req: Request, res: Response) {
         message: 'Board not found',
       });
     }
+
+    await logActivity({
+  type: ActivityType.BOARD_DELETED,
+  userId: userId!,
+  boardId: id,
+  metadata: {
+    boardTitle: existingBoard.title,
+  },
+});
 
     await prisma.board.delete({
       where: {

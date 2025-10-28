@@ -1,13 +1,15 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
+import { logActivity, ActivityType } from '../services/activity.service'; // Add import
 
 // Create a new card in a list
 export async function createCard(req: Request, res: Response) {
   try {
     const { title, description, listId } = req.body;
     const tenantId = req.user?.tenantId;
+    const userId = req.user?.userId;
 
-    if (!tenantId) {
+    if (!tenantId || !userId) {
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'User not authenticated',
@@ -52,6 +54,18 @@ export async function createCard(req: Request, res: Response) {
         description: description || null,
         listId,
         position,
+      },
+    });
+
+        await logActivity({
+      type: ActivityType.CARD_CREATED,
+      userId: userId!,
+      boardId: list.boardId,
+      cardId: card.id,
+      listId: list.id,
+      metadata: {
+        cardTitle: card.title,
+        listTitle: list.title,
       },
     });
 
@@ -198,8 +212,9 @@ export async function updateCard(req: Request, res: Response) {
     const { id } = req.params;
     const { title, description, listId, position } = req.body;
     const tenantId = req.user?.tenantId;
+    const userId = req.user?.userId;
 
-    if (!tenantId) {
+    if (!tenantId || !userId) {
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'User not authenticated',
@@ -253,6 +268,45 @@ export async function updateCard(req: Request, res: Response) {
         position: position !== undefined ? position : existingCard.position,
       },
     });
+
+        if (listId && listId !== existingCard.listId) {
+      const oldList = await prisma.list.findUnique({
+        where: { id: existingCard.listId },
+      });
+      const newList = await prisma.list.findUnique({
+        where: { id: listId },
+      });
+
+      await logActivity({
+        type: ActivityType.CARD_MOVED,
+        userId: userId!,
+        boardId: newList!.boardId,
+        cardId: card.id,
+        listId: listId,
+        metadata: {
+          cardTitle: card.title,
+          fromList: oldList?.title,
+          toList: newList?.title,
+        },
+      });
+    } else if (title || description !== undefined) {
+      // Card was updated but not moved
+      const list = await prisma.list.findUnique({
+        where: { id: existingCard.listId },
+      });
+
+      await logActivity({
+        type: ActivityType.CARD_UPDATED,
+        userId: userId!,
+        boardId: list!.boardId,
+        cardId: card.id,
+        listId: existingCard.listId,
+        metadata: {
+          cardTitle: card.title,
+          changes: { title, description },
+        },
+      });
+    }
 
     res.status(200).json({
       message: 'Card updated successfully',

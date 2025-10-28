@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
+import { logActivity, ActivityType } from '../services/activity.service'; // Add import
+
 
 // Create a new tag for a board
 export async function createTag(req: Request, res: Response) {
@@ -297,6 +299,29 @@ export async function assignTagToCard(req: Request, res: Response) {
       },
       include: {
         tag: true,
+      },
+    });
+
+        // ✅ Log activity
+    const cardWithBoard = await prisma.card.findUnique({
+      where: { id: cardId },
+      include: {
+        list: {
+          select: {
+            boardId: true,
+          },
+        },
+      },
+    });
+
+    await logActivity({
+      type: ActivityType.TAG_ASSIGNED,
+      userId: req.user!.userId,
+      boardId: cardWithBoard!.list.boardId,
+      cardId: cardId,
+      metadata: {
+        tagName: tag!.name,
+        tagColor: tag!.color,
       },
     });
 

@@ -173,6 +173,7 @@ model Attachment {
 model ActivityEvent {
   id          String   @id @default(uuid())
   tenantId    String
+  type      String
   userId      String
   boardId     String?
   cardId      String?

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
+import { logActivity, ActivityType } from '../services/activity.service'; // Add import
 
 // Add comment to a card
 export async function createComment(req: Request, res: Response) {
@@ -58,6 +59,28 @@ export async function createComment(req: Request, res: Response) {
       },
     });
 
+        // ✅ Get board ID for activity log
+    const cardWithBoard = await prisma.card.findUnique({
+      where: { id: cardId },
+      include: {
+        list: {
+          select: {
+            boardId: true,
+          },
+        },
+      },
+    });
+
+    await logActivity({
+      type: ActivityType.COMMENT_CREATED,
+      userId: userId!,
+      boardId: cardWithBoard!.list.boardId,
+      cardId: cardId,
+      metadata: {
+        commentPreview: content.substring(0, 100),
+      },
+    });
+
     res.status(201).json({
       message: 'Comment created successfully',
       comment,
@@ -76,6 +99,7 @@ export async function getComments(req: Request, res: Response) {
   try {
     const { cardId } = req.params;
     const tenantId = req.user?.tenantId;
+    
 
     if (!tenantId) {
       return res.status(401).json({
