@@ -3,6 +3,9 @@ import cors from "cors";
 import authRoutes from '../src/routes/auth.routes';
 import boardRoutes from "../src/routes/board.routes"
 import listRoutes from '../src/routes/list.routes';
+import cardRoutes from '../src/routes/card.routes';
+import commentRoutes from "../src/routes/comment.routes"
+import tagRoutes from "../src/routes/tag.routes"
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,18 +14,17 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/boards', boardRoutes);
-app.use('/api/lists', listRoutes); // Add this
+app.use('/api/lists', listRoutes); 
+app.use('/api/cards', cardRoutes); 
+app.use('/api/comments', commentRoutes); 
+app.use("/api/tags",tagRoutes)
 
-
-// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`🚀 FlowDeck API running on http://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
