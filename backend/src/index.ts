@@ -8,7 +8,6 @@ import commentRoutes from "../src/routes/comment.routes"
 import tagRoutes from "../src/routes/tag.routes"
 import activityRoutes from './routes/activity.routes'; // ✅ Add this
 
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 

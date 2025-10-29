@@ -38,7 +38,6 @@ export async function createBoard(req: Request, res: Response) {
       userId: userId!,
       boardId: board.id,
         tenantId: tenantId,  // ✅ Add this everywhere
-
       metadata: {
         boardTitle: board.title,
       },
