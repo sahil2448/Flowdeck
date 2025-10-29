@@ -6,14 +6,17 @@ import {
   deleteList,
 } from '../controllers/list.controller';
 import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { createListSchema, updateListSchema } from '../validators/list.validator';
+
 
 const router = Router();
 
 router.use(authenticate);
 
-router.post('/', createList);
+router.post('/', validate(createListSchema), createList);
 router.get('/board/:boardId', getLists);
-router.patch('/:id', updateList);
+router.patch('/:id', validate(updateListSchema), updateList);
 router.delete('/:id', deleteList);
 
 export default router;

@@ -1,21 +1,20 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { logActivity, ActivityType } from '../services/activity.service'; // Add this import
+import { asyncHandler } from '../utils/asyncHandler';
+import { UnauthorizedError, NotFoundError } from '../errors/AppError';
 
 
 // Create a new board
 export async function createBoard(req: Request, res: Response) {
-  try {
+
     const { title, description } = req.body;
     const tenantId = req.user?.tenantId;
     const userId = req.user?.userId;
 
-    if (!tenantId || !userId) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'User not authenticated',
-      });
-    }
+  if (!tenantId || !userId) {
+    throw new UnauthorizedError('User not authenticated');
+  }
 
     if (!title) {
       return res.status(400).json({
@@ -47,13 +46,7 @@ export async function createBoard(req: Request, res: Response) {
       message: 'Board created successfully',
       board,
     });
-  } catch (error) {
-    console.error('Create board error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'Failed to create board',
-    });
-  }
+  
 }
 
 // get all boards for the tenant

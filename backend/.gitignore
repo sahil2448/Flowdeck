@@ -6,3 +6,33 @@ node_modules
 
 /generated/prisma
 Notes/Docker + PostgreSQL + Prisma Setup - Complete Reference.pdf
+
+
+# Dependencies
+node_modules/
+
+# Environment variables (contains secrets!)
+.env
+
+# Logs
+logs/
+*.log
+
+# Build output (compiled TypeScript)
+dist/
+build/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/

@@ -18,7 +18,6 @@ export function validate(schema: ZodSchema) {
           details: errors,
         });
       }
-
       next(error);
     }
   };

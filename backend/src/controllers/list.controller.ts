@@ -1,13 +1,15 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
+import { logActivity, ActivityType } from '../services/activity.service';
 
 // Create a new list in a board
 export async function createList(req: Request, res: Response) {
   try {
     const { title, boardId } = req.body;
     const tenantId = req.user?.tenantId;
+    const userId = req.user?.userId;
 
-    if (!tenantId) {
+    if (!tenantId || !userId) {
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'User not authenticated',
@@ -49,6 +51,20 @@ export async function createList(req: Request, res: Response) {
         title,
         boardId,
         position,
+      },
+    });
+
+
+        // ✅ Log activity
+    await logActivity({
+      type: ActivityType.LIST_CREATED,
+      userId: userId,
+      tenantId: tenantId,
+      boardId: boardId,
+      listId: list.id,
+      metadata: {
+        listTitle: list.title,
+        position: list.position,
       },
     });
 
@@ -125,8 +141,9 @@ export async function updateList(req: Request, res: Response) {
     const { id } = req.params;
     const { title, position } = req.body;
     const tenantId = req.user?.tenantId;
+    const userId = req.user?.userId;
 
-    if (!tenantId) {
+    if (!tenantId || !userId) {
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'User not authenticated',
@@ -158,6 +175,19 @@ export async function updateList(req: Request, res: Response) {
       },
     });
 
+        // ✅ Log activity
+    await logActivity({
+      type: ActivityType.LIST_UPDATED,
+      userId: userId,
+      tenantId: tenantId,
+      boardId: existingList.boardId,
+      listId: list.id,
+      metadata: {
+        listTitle: list.title,
+        changes: { title, position },
+      },
+    });
+
     res.status(200).json({
       message: 'List updated successfully',
       list,
@@ -176,8 +206,9 @@ export async function deleteList(req: Request, res: Response) {
   try {
     const { id } = req.params;
     const tenantId = req.user?.tenantId;
+    const userId = req.user?.userId;
 
-    if (!tenantId) {
+    if (!tenantId || !userId) {
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'User not authenticated',
@@ -200,6 +231,18 @@ export async function deleteList(req: Request, res: Response) {
         message: 'List not found',
       });
     }
+
+        // ✅ Log activity BEFORE deleting
+    await logActivity({
+      type: ActivityType.LIST_DELETED,
+      userId: userId,
+      tenantId: tenantId,
+      boardId: existingList.boardId,
+      listId: id,
+      metadata: {
+        listTitle: existingList.title,
+      },
+    });
 
     await prisma.list.delete({
       where: { id },

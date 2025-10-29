@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma';
+import logger from '../config/logger'; 
 
 export enum ActivityType {
   BOARD_CREATED = 'BOARD_CREATED',
@@ -21,7 +22,7 @@ export enum ActivityType {
 interface LogActivityParams {
   type: ActivityType;
   userId: string;
-  tenantId: string;  // ✅ Add this
+  tenantId: string;  
   boardId: string;
   cardId?: string | null;
   listId?: string | null;
@@ -42,7 +43,7 @@ export async function logActivity(params: LogActivityParams) {
       },
     });
   } catch (error) {
-    console.error('Activity logging error:', error);
+    logger.error('Activity logging error:', error);
   }
 }
 
