@@ -1,18 +1,18 @@
 import express from 'express';
 import cors from "cors";
-import authRoutes from '../src/routes/auth.routes';
-import boardRoutes from "../src/routes/board.routes"
-import listRoutes from '../src/routes/list.routes';
-import cardRoutes from '../src/routes/card.routes';
-import commentRoutes from "../src/routes/comment.routes"
-import tagRoutes from "../src/routes/tag.routes"
+import authRoutes from './routes/auth.routes';
+import boardRoutes from "./routes/board.routes"
+import listRoutes from './routes/list.routes';
+import cardRoutes from './routes/card.routes';
+import commentRoutes from "./routes/comment.routes"
+import tagRoutes from "./routes/tag.routes"
 import activityRoutes from './routes/activity.routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger'; 
 import logger from './config/logger';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
