@@ -91,6 +91,58 @@ export async function getBoards(req: Request, res: Response) {
 
 
 // Get a single board by ID
+// export async function getBoard(req: Request, res: Response) {
+//   try {
+//     const { id } = req.params;
+//     const tenantId = req.user?.tenantId;
+
+//     if (!tenantId) {
+//       return res.status(401).json({
+//         error: 'Unauthorized',
+//         message: 'User not authenticated',
+//       });
+//     }
+
+//     const board = await prisma.board.findFirst({
+//       where: {
+//         id,
+//         tenantId,
+//       },
+//       include: {
+//         lists: {
+//           orderBy: {
+//             position: 'asc',
+//           },
+//           include: {
+//             _count: {
+//               select: {
+//                 cards: true,
+//               },
+//             },
+//           },
+//         },
+//       },
+//     });
+
+//     if (!board) {
+//       return res.status(404).json({
+//         error: 'Not Found',
+//         message: 'Board not found',
+//       });
+//     }
+
+//     res.status(200).json({
+//       board,
+//     });
+//   } catch (error) {
+//     console.error('Get board error:', error);
+//     res.status(500).json({
+//       error: 'Internal Server Error',
+//       message: 'Failed to fetch board',
+//     });
+//   }
+// }
+
 export async function getBoard(req: Request, res: Response) {
   try {
     const { id } = req.params;
@@ -110,16 +162,12 @@ export async function getBoard(req: Request, res: Response) {
       },
       include: {
         lists: {
-          orderBy: {
-            position: 'asc',
-          },
           include: {
-            _count: {
-              select: {
-                cards: true,
-              },
+            cards: {
+              orderBy: { position: 'asc' }, // ✅ Order cards
             },
           },
+          orderBy: { position: 'asc' }, // ✅ Order lists
         },
       },
     });
@@ -142,7 +190,6 @@ export async function getBoard(req: Request, res: Response) {
     });
   }
 }
-
 
 
 // Update board
