@@ -56,7 +56,7 @@ export function CreateListDialog({ open, onOpenChange, boardId }: CreateListDial
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
             <div>
-              <Label htmlFor="title">List Title</Label>
+              <Label htmlFor="title" className="">List Title</Label>
               <Input
                 id="title"
                 value={title}

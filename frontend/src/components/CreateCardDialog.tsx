@@ -57,8 +57,8 @@ export function CreateCardDialog({ open, onOpenChange, listId }: CreateCardDialo
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            <div>
+          <div className="space-y-7 py-4">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="title">Card Title</Label>
               <Input
                 id="title"
@@ -68,7 +68,7 @@ export function CreateCardDialog({ open, onOpenChange, listId }: CreateCardDialo
                 required
               />
             </div>
-            <div>
+            <div className="flex flex-col gap-2">
               <Label htmlFor="description">Description (optional)</Label>
               <Textarea
                 id="description"

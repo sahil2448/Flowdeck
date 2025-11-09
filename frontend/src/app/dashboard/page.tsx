@@ -11,6 +11,7 @@ import { CreateBoardDialog } from "@/components/createBoardDialog";
 
 import { useRouter } from "next/navigation";
 import { LogoutButton } from "@/components/LogoutButton";
+import { Skeleton } from "@/components/ui/skeleton";
 // import { CreateBoardDialog } from "@/components/createBoardDialog";
 
 export default function DashboardPage() {
@@ -44,7 +45,7 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">Your Boards</h2>
-          <Button onClick={() => setShowCreateDialog(true)}>
+          <Button onClick={() => setShowCreateDialog(true)} className="flex gap-0 cursor-pointer">
             <PlusIcon className="w-4 h-4 mr-2" />
             Create Board
           </Button>
@@ -52,11 +53,17 @@ export default function DashboardPage() {
 
         {/* Boards Grid */}
         {loading ? (
-          <div className="text-center py-12">Loading boards...</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} className="h-[120px] w-[250px] rounded-xl" />
+
+            ))}
+
+          </div>
         ) : boards.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 mb-4">No boards yet. Create your first board!</p>
-            <Button onClick={() => setShowCreateDialog(true)}>
+            <Button onClick={() => setShowCreateDialog(true)} className="cursor-pointer" >
               <PlusIcon className="w-4 h-4 mr-2" />
               Create Board
             </Button>
@@ -66,7 +73,7 @@ export default function DashboardPage() {
             {boards.map((board) => (
               <Card
                 key={board.id}
-                className="cursor-pointer hover:shadow-lg transition-shadow"
+                className="cursor-pointer hover:shadow-md transition-shadow rounded-[8px]"
                 onClick={() => router.push(`/boards/${board.id}`)}
               >
                 <CardHeader>

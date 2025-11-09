@@ -19,7 +19,7 @@ export function KanbanCard({ card }: KanbanCardProps) {
   return (
     <>
       <Card
-        className="cursor-pointer hover:shadow-md transition-shadow"
+        className="cursor-pointer hover:shadow-md transition-shadow rounded-sm p-0"
         onClick={() => setShowDetail(true)}
       >
         <CardHeader className="p-3">

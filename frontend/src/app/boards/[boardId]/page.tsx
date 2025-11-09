@@ -82,7 +82,7 @@ useEffect(() => {
                 )}
               </div>
             </div>
-            <Button onClick={() => setShowCreateList(true)}>
+            <Button onClick={() => setShowCreateList(true)} className="flex gap-0">
               <PlusIcon className="w-4 h-4 mr-2" />
               Add List
             </Button>

@@ -56,8 +56,8 @@ export function CreateBoardDialog({ open, onOpenChange }: CreateBoardDialogProps
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            <div>
+          <div className="space-y-7 py-4">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="title">Board Title</Label>
               <Input
                 id="title"
@@ -67,7 +67,7 @@ export function CreateBoardDialog({ open, onOpenChange }: CreateBoardDialogProps
                 required
               />
             </div>
-            <div>
+            <div className="flex flex-col gap-2">
               <Label htmlFor="description">Description (optional)</Label>
               <Textarea
                 id="description"
@@ -78,10 +78,10 @@ export function CreateBoardDialog({ open, onOpenChange }: CreateBoardDialogProps
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="cursor-pointer">
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="cursor-pointer">
               {loading ? "Creating..." : "Create Board"}
             </Button>
           </DialogFooter>
