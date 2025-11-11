@@ -32,7 +32,7 @@ interface BoardState {
   fetchBoard: (boardId: string) => Promise<void>;
   createList: (boardId: string, title: string) => Promise<void>;
   createCard: (listId: string, title: string, description?: string) => Promise<void>;
-  moveCard: (cardId: string, newListId: string, newPosition: number) => Promise<void>;
+  moveCard: (cardId: string, fromListId: string, toListId: string, targetIndex: number) => Promise<void>;
   updateCard: (cardId: string, updates: Partial<Card>) => Promise<void>;
   deleteCard: (cardId: string) => Promise<void>;
 }
@@ -123,17 +123,16 @@ fetchBoard: async (boardId: string) => {
     }
   },
 
-  moveCard: async (cardId: string, newListId: string, newPosition: number) => {
-    try {
-      await api.patch(`/api/cards/${cardId}`, { 
-        listId: newListId, 
-        position: newPosition 
-      });
-      // Optimistically update UI
-      const board = get().board;
-      if (board) {
-        let movedCard: Card | null = null;
-        const updatedLists = board.lists.map(list => ({
+moveCard: async(cardId: string, fromListId: string, toListId: string, targetIndex: number) => {
+  // Optimistically update UI first!
+  const board = get().board;
+  if (board) {
+    let movedCard: any = null;
+
+    // Remove card from source list
+    const updatedLists = board.lists.map(list => {
+      if (list.id === fromListId) {
+        return {
           ...list,
           cards: list.cards.filter(card => {
             if (card.id === cardId) {
@@ -141,25 +140,38 @@ fetchBoard: async (boardId: string) => {
               return false;
             }
             return true;
-          })
-        }));
-
-        if (movedCard) {
-          const targetList = updatedLists.find(l => l.id === newListId);
-          if (targetList) {
-            targetList.cards.splice(newPosition, 0, { 
-              ...movedCard, 
-              listId: newListId 
-            });
-          }
-        }
-
-        set({ board: { ...board, lists: updatedLists } });
+          }),
+        };
       }
-    } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Failed to move card');
+      return { ...list };
+    });
+
+    // Insert into target list at correct position
+    if (movedCard) {
+      const targetList = updatedLists.find(l => l.id === toListId);
+      if (targetList) {
+        targetList.cards.splice(targetIndex, 0, { ...movedCard, listId: toListId });
+        // Re-number positions for clean sorting
+        targetList.cards.forEach((card, i) => (card.position = i));
+        const prevList = updatedLists.find(l => l.id === fromListId);
+        if (prevList) prevList.cards.forEach((card, i) => (card.position = i));
+      }
     }
-  },
+
+    set({ board: { ...board, lists: updatedLists } });
+
+    // After UI mutation (no delay), sync to backend
+    api.patch(`/api/cards/${cardId}`, {
+      listId: toListId,
+      position: targetIndex,
+    }).catch((error: any) => {
+      // Optional: revert UI, show a toast, etc
+      // toast.error(error.response?.data?.error || 'Failed to move card');
+    });
+  }
+},
+
+
 
   updateCard: async (cardId: string, updates: Partial<Card>) => {
     try {

@@ -53,7 +53,7 @@ useEffect(() => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-lg mb-4">Board not found</p>
-          <Button onClick={() => router.push('/dashboard')}>
+          <Button onClick={() => router.push('/dashboard')} className="cursor-pointer">
             Back to Dashboard
           </Button>
         </div>
