@@ -36,7 +36,6 @@ export function CardDetailDialog({ open, onOpenChange, card }: CardDetailDialogP
       toast.error("Title cannot be empty");
       return;
     }
-
     setLoading(true);
     try {
       await updateCard(card.id, { title, description: description || null });
@@ -64,39 +63,54 @@ export function CardDetailDialog({ open, onOpenChange, card }: CardDetailDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Card Details</DialogTitle>
+      <DialogContent className="max-w-lg py-6 px-6">
+        <DialogHeader className="mb-2">
+          <DialogTitle className="text-lg font-semibold mb-1">
+            Card Details
+          </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="space-y-5">
           <div>
-            <Label htmlFor="edit-title">Title</Label>
+            <Label htmlFor="edit-title" className="text-sm font-medium mb-1 block">
+              Title
+            </Label>
             <Input
               id="edit-title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={e => setTitle(e.target.value)}
+              className="h-10 text-base"
+              maxLength={80}
+              required
+              placeholder="Enter card title"
             />
           </div>
           <div>
-            <Label htmlFor="edit-description">Description</Label>
+            <Label htmlFor="edit-description" className="text-sm font-medium mb-1 block">
+              Description
+            </Label>
             <Textarea
               id="edit-description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={6}
+              onChange={e => setDescription(e.target.value)}
+              className="text-base"
+              rows={5}
+              maxLength={500}
+              placeholder="Describe task details"
             />
           </div>
-          <div className="flex justify-between pt-4">
+          <div className="flex justify-end gap-2 pt-3">
             <Button
+              type="button"
               variant="destructive"
               onClick={handleDelete}
               disabled={loading}
+              className="flex items-center gap-1"
             >
-              <TrashIcon className="w-4 h-4 mr-2" />
-              Delete Card
+              <TrashIcon className="w-4 h-4" />
+              Delete
             </Button>
-            <Button onClick={handleUpdate} disabled={loading}>
-              {loading ? "Saving..." : "Save Changes"}
+            <Button type="button" onClick={handleUpdate} disabled={loading}>
+              {loading ? "Saving..." : "Save"}
             </Button>
           </div>
         </div>

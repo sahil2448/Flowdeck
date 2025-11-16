@@ -3,7 +3,10 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { CardDetailDialog } from "./CardDetailDialog";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-
+import { GripHorizontal, GripVertical } from "lucide-react";
+import {   Tooltip,
+  TooltipContent,
+  TooltipTrigger, } from "@/components/ui/tooltip";
 interface CardData {
   id: string;
   title: string;
@@ -70,24 +73,54 @@ export function KanbanCard({ card }: KanbanCardProps) {
 
   return (
     <>
-      <Card
-        ref={setNodeRef}
+    <div
+             ref={setNodeRef}
         style={style}
         {...attributes}
-        {...listeners}
+        >
+              <Tooltip>
+      <TooltipTrigger asChild>
+      <Card
+
         className={`cursor-pointer transition-shadow rounded-sm p-0 select-none bg-gray-50! border! hover:border-black!`}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
       >
-        <CardHeader className="p-3">
-          <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
+        <CardHeader className="p-3 flex justify-between items-center" >
+          
+          <div className="flex flex-col gap-2">
+            <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
           {card.description && (
             <CardDescription className="text-xs line-clamp-2">
               {card.description}
             </CardDescription>
           )}
+          </div>
+          
+                        <Tooltip>
+      <TooltipTrigger asChild>
+            <div {...listeners} className="ml-2 p-1 cursor-grab hover:bg-gray-300 transition-all duration-200 h-full" aria-label="Drag card">
+              <GripVertical className="w- h-6 p-0" />
+            </div>
+            </TooltipTrigger>
+                        <TooltipContent>
+              <p>                Drag Card
+</p>
+              </TooltipContent>
+
+            </Tooltip>
+            
         </CardHeader>
       </Card>
+      </TooltipTrigger>
+            <TooltipContent>
+              <p>                Card Details
+</p>
+              </TooltipContent>
+
+      </Tooltip>
+    </div>
+      
       <CardDetailDialog
         open={showDetail}
         onOpenChange={setShowDetail}

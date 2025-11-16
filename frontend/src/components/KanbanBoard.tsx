@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { KanbanList } from "./KanbanList";
-import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useBoardStore } from "@/store/board";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { KanbanCard } from "./KanbanCard";
@@ -28,6 +28,8 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ board }: KanbanBoardProps) {
+    const sensors = useSensors(useSensor(PointerSensor));
+
   const moveCard = useBoardStore((s) => s.moveCard);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   
@@ -80,8 +82,11 @@ export function KanbanBoard({ board }: KanbanBoardProps) {
 
   return (
     <DndContext
+          // sensors={sensors}
+
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      
     >
             
    <SortableContext

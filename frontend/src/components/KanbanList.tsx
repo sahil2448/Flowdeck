@@ -48,7 +48,7 @@ export function KanbanList({ list, activeCardId }: KanbanListProps) {
           </div>
 
           <SortableContext
-            id={list.id}
+            // id={list.id}
             items={cards.map(card => card.id)}
             strategy={verticalListSortingStrategy}
           >
@@ -71,7 +71,6 @@ export function KanbanList({ list, activeCardId }: KanbanListProps) {
     : cards.map((card, idx) => (
         <div key={card.id}>
           <KanbanCard card={card} />
-          {/* Show placeholder only after the last card if dragging over */}
           {idx === cards.length - 1 && isOver && activeCardId && (
             <div
               className="rounded-md bg-blue-100 border-2 border-blue-400 my-2 flex items-center justify-center"
