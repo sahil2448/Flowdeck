@@ -39,7 +39,7 @@ export function KanbanList({ list, activeCardId }: KanbanListProps) {
 
   return (
     <>
-      <div ref={setNodeRef} className="shrink-0 w-80">
+      <div ref={setNodeRef} className="shrink-0 w-80 ">
         <Card className="p-4">
           {/* List Header */}
           <div className="flex items-center justify-between">

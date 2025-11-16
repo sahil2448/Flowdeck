@@ -18,7 +18,6 @@ export default function BoardPage() {
   const fetchBoard = useBoardStore((s) => s.fetchBoard);
   const reset = useBoardStore((s) => s.reset); // ✅ Add reset
   const [showCreateList, setShowCreateList] = useState(false);
-
   useEffect(() => {
     if (boardId) {
       fetchBoard(boardId);
@@ -28,7 +27,6 @@ export default function BoardPage() {
       reset();
     };
   }, [boardId, fetchBoard,reset]);
-
   // ✅ Add this to debug
 useEffect(() => {
   if (board) {

@@ -1,13 +1,8 @@
-"use client";
+import { useRef, useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { use, useState } from "react";
 import { CardDetailDialog } from "./CardDetailDialog";
-import { useSortable, AnimateLayoutChanges, defaultAnimateLayoutChanges } from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-
-// Recommended AnimateLayoutChanges for best spring smoothness
-const animateLayoutChanges: AnimateLayoutChanges = (args) =>
-  defaultAnimateLayoutChanges({ ...args, wasDragging: true });
 
 interface CardData {
   id: string;
@@ -21,6 +16,11 @@ interface KanbanCardProps {
 
 export function KanbanCard({ card }: KanbanCardProps) {
   const [showDetail, setShowDetail] = useState(false);
+
+  // Use ref for pointer tracking
+  const pointerDownRef = useRef(false);
+  const startXRef = useRef(0);
+  const startYRef = useRef(0);
 
   const {
     attributes,
@@ -40,7 +40,7 @@ export function KanbanCard({ card }: KanbanCardProps) {
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: transition || 'transform 0.25s cubic-bezier(.18,.89,.32,1.28)',
+    transition: transition || "transform 0.25s cubic-bezier(.18,.89,.32,1.28)",
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 100 : isSorting ? 10 : undefined,
     boxShadow: isDragging || isSorting
@@ -48,10 +48,25 @@ export function KanbanCard({ card }: KanbanCardProps) {
       : "0 1px 3px 0 rgba(0,0,0,0.10)",
     border: isDragging ? "2px solid #2563eb" : "1px solid #f3f4f6",
     background: "white",
-    touchAction: "none",
     cursor: "grab",
-    // userSelect: "none",
   };
+
+  function handlePointerDown(e: React.PointerEvent) {
+    pointerDownRef.current = true;
+    startXRef.current = e.clientX;
+    startYRef.current = e.clientY;
+  }
+  function handlePointerUp(e: React.PointerEvent) {
+    if (pointerDownRef.current) {
+      const dx = Math.abs(e.clientX - startXRef.current);
+      const dy = Math.abs(e.clientY - startYRef.current);
+      // threshold for drag vs click, adjust as needed
+      if (dx < 5 && dy < 5) {
+        setShowDetail(true); // it's a click
+      }
+      pointerDownRef.current = false;
+    }
+  }
 
   return (
     <>
@@ -60,8 +75,9 @@ export function KanbanCard({ card }: KanbanCardProps) {
         style={style}
         {...attributes}
         {...listeners}
-        className={`cursor-pointer hover:shadow-md transition-shadow rounded-sm p-0 select-none`}
-        onClick={() => setShowDetail(true)}
+        className={`cursor-pointer transition-shadow rounded-sm p-0 select-none bg-gray-50! border! hover:border-black!`}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
       >
         <CardHeader className="p-3">
           <CardTitle className="text-sm font-medium">{card.title}</CardTitle>

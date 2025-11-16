@@ -3,7 +3,9 @@ import { useState } from "react";
 import { KanbanList } from "./KanbanList";
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { useBoardStore } from "@/store/board";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { KanbanCard } from "./KanbanCard";
+import { horizontalListSortingStrategy, SortableContext } from "@dnd-kit/sortable";
 
 interface Board {
   id: string;
@@ -81,13 +83,23 @@ export function KanbanBoard({ board }: KanbanBoardProps) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {board.lists
-          .sort((a, b) => a.position - b.position)
-          .map((list) => (
-          <KanbanList key={list.id} list={list} activeCardId={activeCardId} />
-          ))}
-      </div>
+            
+   <SortableContext
+        // Pass list IDs to enable horizontal (drag to reorder lists, if needed)
+        items={board.lists.map(list => list.id)}
+        strategy={horizontalListSortingStrategy}
+      >
+        <ScrollArea className="w-full">
+          <div className="flex gap-4 overflow-x-auto pb-4 min-h-[80vh]">
+            {board.lists
+              .sort((a, b) => a.position - b.position)
+              .map(list => (
+                <KanbanList key={list.id} list={list} activeCardId={activeCardId} />
+              ))}
+          </div>
+          <ScrollBar orientation="horizontal" className="mb-4 bg-black " />
+        </ScrollArea>
+      </SortableContext>
       {/* DragOverlay: floating card during drag */}
       <DragOverlay>
         {activeCard ? (
