@@ -37,6 +37,7 @@ interface BoardState {
   deleteCard: (cardId: string) => Promise<void>;
   renameList: (listId: string, newTitle: string) => Promise<void>;
   deleteList: (listId: string) => Promise<void>;
+  moveList: (listId: string, targetIndex: number) => Promise<void>;
 }
 
 export const useBoardStore = create<BoardState>((set, get) => ({
@@ -49,18 +50,6 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     set({ board: null, loading: false, error: null });
   },
 
-//   fetchBoard: async (boardId: string) => {
-//     set({ loading: true, error: null }); // Keep this
-//     try {
-//       const res = await api.get(`/api/boards/${boardId}`);
-//       set({ board: res.data.board, loading: false });
-//     } catch (error: any) {
-//       set({ 
-//         error: error.response?.data?.error || 'Failed to fetch board', 
-//         loading: false 
-//       });
-//     }
-//   },
 fetchBoard: async (boardId: string) => {
   set({ loading: true, error: null });
   try {
@@ -173,8 +162,6 @@ moveCard: async(cardId: string, fromListId: string, toListId: string, targetInde
   }
 },
 
-
-
   updateCard: async (cardId: string, updates: Partial<Card>) => {
     try {
       const res = await api.patch(`/api/cards/${cardId}`, updates);
@@ -247,6 +234,27 @@ deleteList: async (listId: string) => {
   }
 },
 
+moveList: async (listId: string, targetIndex: number) => {
+  const board = get().board;
+  if (!board) return;
+  let newLists = [...board.lists];
+  const oldIndex = newLists.findIndex(l => l.id === listId);
+  if (oldIndex === -1 || targetIndex === oldIndex) return;
+  const [movedList] = newLists.splice(oldIndex, 1);
+  newLists.splice(targetIndex, 0, movedList);
+
+  // Renumber all lists for persistence
+  newLists = newLists.map((l, i) => ({ ...l, position: i }));
+  set({ board: { ...board, lists: newLists } });
+
+  // PATCH each list with its updated position (matches backend router)
+  await Promise.all(newLists.map(l =>
+    api.patch(`/api/lists/${l.id}`, { position: l.position })
+  ));
+}
+
+
 
 }));
+
 
