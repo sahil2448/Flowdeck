@@ -35,6 +35,8 @@ interface BoardState {
   moveCard: (cardId: string, fromListId: string, toListId: string, targetIndex: number) => Promise<void>;
   updateCard: (cardId: string, updates: Partial<Card>) => Promise<void>;
   deleteCard: (cardId: string) => Promise<void>;
+  renameList: (listId: string, newTitle: string) => Promise<void>;
+  deleteList: (listId: string) => Promise<void>;
 }
 
 export const useBoardStore = create<BoardState>((set, get) => ({
@@ -214,4 +216,37 @@ moveCard: async(cardId: string, fromListId: string, toListId: string, targetInde
       throw new Error(error.response?.data?.error || 'Failed to delete card');
     }
   },
+renameList: async (listId: string, newTitle: string) => {
+  try {
+    await api.patch(`/api/lists/${listId}`, { title: newTitle }); // ❗ Backend update
+    set((state) => {
+      if (!state.board) return state;
+      const lists = state.board.lists.map(l =>
+        l.id === listId ? { ...l, title: newTitle } : l
+      );
+      return { board: { ...state.board, lists } };
+    });
+  } catch (error: any) {
+    // Optionally show error to user (toast, alert, etc)
+    console.error("Failed to rename list:", error);
+  }
+},
+
+
+deleteList: async (listId: string) => {
+  try {
+    await api.delete(`/api/lists/${listId}`); // ❗ Backend deletion
+    set((state) => {
+      if (!state.board) return state;
+      const lists = state.board.lists.filter(l => l.id !== listId);
+      return { board: { ...state.board, lists } };
+    });
+  } catch (error: any) {
+    // Optionally show error to user (toast, alert, etc)
+    console.error("Failed to delete list:", error);
+  }
+},
+
+
 }));
+
