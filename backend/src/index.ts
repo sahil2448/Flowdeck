@@ -19,6 +19,10 @@ app.use(cors());
 app.use(express.json());
 app.use(requestLogger); //  request logging
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/boards', boardRoutes);
 app.use('/api/lists', listRoutes); 
@@ -31,9 +35,6 @@ app.use('/api/activity', activityRoutes); //  Add this
 app.use(notFoundHandler);  // 404 for undefined routes
 app.use(errorHandler);      // Centralized error handling
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
 
 app.listen(PORT, () => {
   logger.info(`🚀 FlowDeck API running on http://localhost:${PORT}`);
