@@ -53,7 +53,7 @@ export function RenameListDialog({ open, onOpenChange, listId, currentTitle }: R
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
-            <div>
+            <div className="flex flex-col gap-3">
               <Label htmlFor="rename-title">New Title</Label>
               <Input
                 id="rename-title"

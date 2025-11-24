@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon, PlusIcon } from "lucide-react";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { CreateListDialog } from "@/components/CreateListDialog";
+import { BoardSearch } from "@/components/BoardSearch";
+import { useBoardsStore } from "@/store/boards";
+import { useAuthStore } from "@/store/auth";
 export default function BoardPage() {
   useAuthRedirect();
   const params = useParams();
@@ -18,6 +21,20 @@ export default function BoardPage() {
   const fetchBoard = useBoardStore((s) => s.fetchBoard);
   const reset = useBoardStore((s) => s.reset); // ✅ Add reset
   const [showCreateList, setShowCreateList] = useState(false);
+
+
+
+
+    const boards = useBoardsStore((s) => s.boards);
+    const fetchBoards = useBoardsStore((s) => s.fetchBoards);
+    const user = useAuthStore((s) => s.user);
+  
+    useEffect(() => {
+      fetchBoards();
+      
+    }, [fetchBoards]);
+
+    
   useEffect(() => {
     if (boardId) {
       fetchBoard(boardId);
@@ -80,6 +97,10 @@ useEffect(() => {
                 )}
               </div>
             </div>
+
+             <div>
+                    <BoardSearch boards={boards} onSelectBoard={board => router.push(`/boards/${board.id}`)} />
+                  </div>
             <Button onClick={() => setShowCreateList(true)} className="flex gap-0">
               <PlusIcon className="w-4 h-4 mr-2" />
               Add List

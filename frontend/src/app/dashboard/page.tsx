@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { PlusIcon } from "lucide-react";
 // import { CreateBoardDialog } from "@/components/createBoardDialog";
 import { CreateBoardDialog } from "@/components/createBoardDialog";
-
+import { BoardSearch } from "@/components/BoardSearch";
 import { useRouter } from "next/navigation";
 import { LogoutButton } from "@/components/LogoutButton";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,13 +35,19 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">FlowDeck</h1>
+            
             <p className="text-sm text-gray-500">Welcome back, {user?.name}!</p>
           </div>
+          <div>
+        <BoardSearch boards={boards} onSelectBoard={board => router.push(`/boards/${board.id}`)} />
+      </div>
           <LogoutButton />
         </div>
       </header>
 
       {/* Main Content */}
+
+      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">Your Boards</h2>
