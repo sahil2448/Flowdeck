@@ -4,7 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { XIcon } from "lucide-react";
 import React from "react";
 
-export function MobileDrawer({ open, onClose, children }) {
+interface MobileDrawerProps {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}
+export function MobileDrawer({ open, onClose, children }: MobileDrawerProps) {
   return (
     <AnimatePresence>
       {open && (

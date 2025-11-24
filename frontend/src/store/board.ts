@@ -17,10 +17,12 @@ interface List {
   cards: Card[];
 }
 
-interface Board {
+export interface Board {
   id: string;
   title: string;
   description: string | null;
+  // Ensure lists is always defined...not possibly undefined
+
   lists: List[];
 }
 

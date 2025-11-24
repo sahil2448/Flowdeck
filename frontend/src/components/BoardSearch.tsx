@@ -1,14 +1,24 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Board } from "@/store/board";
 
+type DropdownMode = "auto" | "absolute" | "block";
+
+interface BoardSearchProps {
+  boards: Board[];
+  onSelectBoard?: (board: Board) => void;
+  inputClass?: string;
+  containerClass?: string;
+  dropdownMode?: DropdownMode;
+}
 export function BoardSearch({
   boards,
   onSelectBoard,
   inputClass = "",
   containerClass = "",
   dropdownMode = "auto" // "auto" | "absolute" | "block"
-}) {
+}: BoardSearchProps) {
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
 

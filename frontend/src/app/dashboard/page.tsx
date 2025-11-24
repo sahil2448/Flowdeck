@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
   useAuthRedirect();
+  
   const boards = useBoardsStore((s) => s.boards);
   const loading = useBoardsStore((s) => s.loading);
   const fetchBoards = useBoardsStore((s) => s.fetchBoards);
@@ -49,9 +50,9 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
-          {/* Desktop menu */}
+            {/* Desktop menu */}
           <div className="hidden sm:flex items-center gap-4">
-            <BoardSearch boards={boards} onSelectBoard={board => router.push(`/boards/${board.id}`)} />
+            <BoardSearch boards={boards} onSelectBoard={board => router.push(`/boards/${board.id}`)} dropdownMode="absolute" />
             <LogoutButton />
           </div>
         </div>
@@ -66,7 +67,7 @@ export default function DashboardPage() {
             }}
             inputClass="w-full px-4 py-2 mb-2 border border-gray-200 rounded-md"
             containerClass="w-full flex flex-col gap-2"
-  dropdownMode="absolute"
+  dropdownMode="block"
           />
           <Button
             className="mt-4 w-full flex gap-2"
@@ -137,3 +138,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

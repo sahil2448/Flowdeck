@@ -7,22 +7,8 @@ import { useBoardStore } from "@/store/board";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { KanbanCard } from "./KanbanCard";
 import { CSS } from "@dnd-kit/utilities";
+import { Board } from "@/store/board";
 
-interface Board {
-  id: string;
-  title: string;
-  lists: Array<{
-    id: string;
-    title: string;
-    position: number;
-    cards: Array<{
-      id: string;
-      title: string;
-      description: string | null;
-      position: number;
-    }>;
-  }>;
-}
 
 interface KanbanBoardProps {
   board: Board;
@@ -32,7 +18,6 @@ function SortableKanbanList({ list, activeCardId }: { list: any; activeCardId: s
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: list.id, data: { type: "list" } });
 
-  // Only pass listeners/attributes to drag handle via props
   return (
     <div
       ref={setNodeRef}
