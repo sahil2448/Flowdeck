@@ -1,35 +1,51 @@
-"use client";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Board } from "@/types";
 
-interface BoardSearchProps {
-  boards: Board[];
-  onSelectBoard?: (board: Board) => void;
-}
-
-export function BoardSearch({ boards, onSelectBoard }: BoardSearchProps) {
+export function BoardSearch({
+  boards,
+  onSelectBoard,
+  inputClass = "",
+  containerClass = "",
+  dropdownMode = "auto" // "auto" | "absolute" | "block"
+}) {
   const [query, setQuery] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
 
-  // Case-insensitive filter; only show results if query is non-empty
-  const filteredBoards = query
-    ? boards.filter((b) =>
-        b.title.toLowerCase().includes(query.toLowerCase())
-      )
-    : [];
+  const filteredBoards =
+    query
+      ? boards.filter((b) =>
+          b.title.toLowerCase().includes(query.toLowerCase())
+        )
+      : [];
+
+  // If mode is auto, use "absolute" on desktop, "block" on mobile based on window width (very naive/but always works)
+  let useBlockDropdown = dropdownMode === "block";
+  if (dropdownMode === "auto" && typeof window !== "undefined") {
+    useBlockDropdown = window.innerWidth < 640; // "sm" breakpoint
+  }
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col gap-2 absolute top-2 left-1/2 -translate-x-1/2 z-50 p-2 sm:max-w-sm">
+    <div className={`${containerClass || "w-full max-w-xs flex flex-col gap-2"} relative`}>
       <Input
         placeholder="Search boards..."
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="mb-2 px-3 py-2"
+        className={inputClass || "mb-2 px-3 py-2"}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setShowDropdown(!!e.target.value);
+        }}
+        onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+        onFocus={() => setShowDropdown(!!query)}
       />
-      {/* Dropdown results */}
-      {query && (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-64 overflow-auto flex flex-col">
+      {showDropdown && (
+        <div
+          className={
+            useBlockDropdown
+              ? "bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-64 overflow-auto flex flex-col z-20"
+              : "absolute left-0 top-full w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-64 overflow-auto flex flex-col z-30"
+          }
+        >
           {filteredBoards.length === 0 ? (
             <div className="text-gray-400 text-center py-4 text-sm">
               No boards found.
@@ -38,8 +54,12 @@ export function BoardSearch({ boards, onSelectBoard }: BoardSearchProps) {
             filteredBoards.map((board) => (
               <Card
                 key={board.id}
-                className="flex flex-col p-2 px-3 gap-2 cursor-pointer rounded-md border-none shadow-none hover:bg-blue-100 active:bg-blue-200 transition mb-[2px]"
-                onClick={() => onSelectBoard?.(board)}
+                className="flex flex-col p-2 px-3 cursor-pointer rounded-md border-none shadow-none hover:bg-blue-100 active:bg-blue-200 transition mb-[2px]"
+                onMouseDown={() => {
+                  onSelectBoard?.(board);
+                  setShowDropdown(false);
+                  setQuery(""); // Optional: clear
+                }}
               >
                 <div className="font-medium text-sm truncate">{board.title}</div>
                 {board.description && (
