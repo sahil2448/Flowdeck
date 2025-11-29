@@ -15,6 +15,7 @@ interface BoardsState {
   fetchBoards: () => Promise<void>;
   createBoard: (title: string, description?: string) => Promise<Board>;
   deleteBoard: (id: string) => Promise<void>;
+  renameBoard: (id: string, title: string) => Promise<void>; // ✅ Added
 }
 
 export const useBoardsStore = create<BoardsState>((set, get) => ({
@@ -51,4 +52,16 @@ export const useBoardsStore = create<BoardsState>((set, get) => ({
       throw new Error(error.response?.data?.error || 'Failed to delete board');
     }
   },
+
+  // ✅ Added Rename Action
+  renameBoard: async (id: string, title: string) => {
+    try {
+        await api.patch(`/api/boards/${id}`, { title });
+        set({
+            boards: get().boards.map(b => b.id === id ? { ...b, title } : b)
+        });
+    } catch (error: any) {
+        throw new Error(error.response?.data?.error || 'Failed to rename board');
+    }
+  }
 }));

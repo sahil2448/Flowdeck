@@ -2,16 +2,16 @@
 import { useEffect, useState } from "react";
 import { useAuthRedirect } from "@/lib/useAuthRedirect";
 import { useBoardsStore } from "@/store/boards";
-import { useAuthStore } from "@/store/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { PlusIcon, MenuIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { CreateBoardDialog } from "@/components/createBoardDialog";
-import { BoardSearch } from "@/components/BoardSearch";
-import { MobileDrawer } from "@/components/MobileDrawer";
 import { useRouter } from "next/navigation";
-import { LogoutButton } from "@/components/LogoutButton";
 import { Skeleton } from "@/components/ui/skeleton";
+import AppLayout from "@/components/AppLayout";
+import { BoardSearch } from "@/components/BoardSearch";
+import { MobileSidebar } from "@/components/MobileSidebar"; // ✅ Import MobileSidebar
+import { UserNav } from "@/components/UserNav"; // ✅ Import UserNav
 
 export default function DashboardPage() {
   useAuthRedirect();
@@ -19,123 +19,117 @@ export default function DashboardPage() {
   const boards = useBoardsStore((s) => s.boards);
   const loading = useBoardsStore((s) => s.loading);
   const fetchBoards = useBoardsStore((s) => s.fetchBoards);
-  const user = useAuthStore((s) => s.user);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     fetchBoards();
   }, [fetchBoards]);
 
+  const handleSelectBoard = (board: any) => {
+    router.push(`/boards/${board.id}`);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Mobile Hamburger */}
-            <button
-              type="button"
-              className="sm:hidden p-2 rounded-md text-gray-500 hover:text-gray-900"
-              aria-label="Open menu"
-              onClick={() => setShowMobileMenu(true)}
-            >
-              <MenuIcon className="w-6 h-6" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">FlowDeck</h1>
-              <p className="text-sm text-gray-500 truncate">
-                Welcome back, {user?.name}!
-              </p>
-            </div>
-          </div>
-            {/* Desktop menu */}
-          <div className="hidden sm:flex items-center gap-4">
-            <BoardSearch boards={boards} onSelectBoard={board => router.push(`/boards/${board.id}`)} dropdownMode="absolute" />
-            <LogoutButton />
-          </div>
+    <AppLayout>
+      {/* ✅ NEW UNIFIED HEADER */}
+      <header className="h-16 bg-white border-b px-4 sm:px-6 flex items-center justify-between shrink-0 gap-4">
+        
+        {/* Left: Mobile Menu & Title */}
+        <div className="flex items-center gap-3 flex-1">
+           <div className="sm:hidden">
+             <MobileSidebar />
+           </div>
+           <h1 className="text-xl font-bold text-gray-900 hidden sm:block">Dashboard</h1>
+           <h1 className="text-xl font-bold text-gray-900 sm:hidden">FlowDeck</h1>
         </div>
-        {/* Mobile Menu (Animated) */}
-        <MobileDrawer open={showMobileMenu} onClose={() => setShowMobileMenu(false)}>
-          <h2 className="text-xl font-bold mb-4">Menu</h2>
-          <BoardSearch
-            boards={boards}
-            onSelectBoard={board => {
-              setShowMobileMenu(false);
-              router.push(`/boards/${board.id}`);
-            }}
-            inputClass="w-full px-4 py-2 mb-2 border border-gray-200 rounded-md"
-            containerClass="w-full flex flex-col gap-2"
-  dropdownMode="block"
-          />
-          <Button
-            className="mt-4 w-full flex gap-2"
-            onClick={() => {
-              setShowMobileMenu(false);
-              setShowCreateDialog(true);
-            }}
-          >
-            <PlusIcon className="w-4 h-4" /> Create Board
-          </Button>
-          <LogoutButton className="mt-4 w-full" />
-        </MobileDrawer>
+
+        {/* Center: Search Bar (Absolute Center or Flex Center) */}
+        <div className="flex-[2] max-w-md flex justify-center">
+           <BoardSearch 
+              boards={boards}
+              onSelectBoard={handleSelectBoard}
+              dropdownMode="absolute"
+              inputClass="bg-gray-100/50 border-transparent focus:bg-white focus:border-blue-200 transition-all h-9 w-full min-w-[200px] sm:min-w-[300px]"
+              containerClass="w-full max-w-md"
+           />
+        </div>
+
+        {/* Right: Actions & Profile */}
+        <div className="flex items-center gap-3 flex-1 justify-end">
+           <Button 
+             size="sm"
+             type="submit"
+             onClick={() => setShowCreateDialog(true)} 
+             className="cursor-pointer"
+             
+           >
+             <PlusIcon className="w-4 h-4" />
+             <span>New Board</span>
+           </Button>
+           {/* Mobile Icon Button */}
+           <Button 
+             size="icon"
+             variant="ghost"
+             onClick={() => setShowCreateDialog(true)} 
+             className="sm:hidden text-blue-600"
+           >
+             <PlusIcon className="w-5 h-5" />
+           </Button>
+           
+           {/* ✅ User Profile Dropdown */}
+           <UserNav />
+        </div>
       </header>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">Your Boards</h2>
-          <Button
-            onClick={() => setShowCreateDialog(true)}
-            className="flex gap-0 cursor-pointer hidden sm:flex"
-          >
-            <PlusIcon className="w-4 h-4 mr-2" />
-            Create Board
-          </Button>
+
+      {/* Main Scrollable Content */}
+      <main className="flex-1 overflow-y-auto p-6 bg-gray-50/50">
+        <div className="max-w-7xl mx-auto">
+          {/* Boards Grid */}
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} className="h-[140px] w-full rounded-xl" />
+              ))}
+            </div>
+          ) : boards.length === 0 ? (
+            <div className="text-center py-20">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 mb-4">
+                <PlusIcon className="w-8 h-8 text-blue-500" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900">No boards created</h3>
+              <p className="text-gray-500 mb-6 max-w-sm mx-auto mt-2">
+                Create your first board to start organizing your tasks and projects efficiently.
+              </p>
+              <Button onClick={() => setShowCreateDialog(true)}>Create Board</Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {boards.map((board) => (
+                <Card
+                  key={board.id}
+                  className="cursor-pointer hover:shadow-lg transition-all duration-200 border-gray-200 hover:border-blue-300 group"
+                  onClick={() => router.push(`/boards/${board.id}`)}
+                >
+                  <CardHeader>
+                    <CardTitle className="group-hover:text-blue-600 transition-colors">
+                        {board.title}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {board.description || "No description provided"}
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
-        {/* Boards Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={index} className="h-[120px] w-[250px] rounded-xl" />
-            ))}
-          </div>
-        ) : boards.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">
-              No boards yet. Create your first board!
-            </p>
-            <Button
-              onClick={() => setShowCreateDialog(true)}
-              className="cursor-pointer"
-            >
-              <PlusIcon className="w-4 h-4 mr-2" />
-              Create Board
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {boards.map((board) => (
-              <Card
-                key={board.id}
-                className="cursor-pointer hover:shadow-md transition-shadow rounded-[8px]"
-                onClick={() => router.push(`/boards/${board.id}`)}
-              >
-                <CardHeader>
-                  <CardTitle>{board.title}</CardTitle>
-                  <CardDescription>
-                    {board.description || "No description"}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        )}
+        
+        <CreateBoardDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+        />
       </main>
-      <CreateBoardDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-      />
-    </div>
+    </AppLayout>
   );
 }
-
