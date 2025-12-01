@@ -27,7 +27,9 @@ export function RenameListDialog({ open, onOpenChange, listId, currentTitle }: R
   const renameList = useBoardStore((s) => s.renameList);
 
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
+
     if (!title.trim()) {
       toast.error("Title is required");
       return;

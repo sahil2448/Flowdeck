@@ -6,10 +6,12 @@ import listRoutes from './routes/list.routes';
 import cardRoutes from './routes/card.routes';
 import commentRoutes from "./routes/comment.routes"
 import tagRoutes from "./routes/tag.routes"
+import userRoutes from "./routes/user.routes";
 import activityRoutes from './routes/activity.routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger'; 
 import logger from './config/logger';
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -30,6 +32,8 @@ app.use('/api/cards', cardRoutes);
 app.use('/api/comments', commentRoutes); 
 app.use("/api/tags",tagRoutes)
 app.use('/api/activity', activityRoutes); //  Add this
+app.use('/api/users', userRoutes); //  Now /api/users/profile works!
+
 
 // Error handlers (MUST be last!)
 app.use(notFoundHandler);  // 404 for undefined routes

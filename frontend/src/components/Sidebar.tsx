@@ -90,7 +90,6 @@ export function Sidebar({ className, isMobile = false, onCloseMobile }: SidebarP
         className
       )}
     >
-      {/* Header: Brand + Collapse Toggle */}
       <div className="flex items-center justify-between h-16 px-4 border-b shrink-0">
         <div className={cn("flex items-center gap-2 font-bold text-xl overflow-hidden transition-all", !showFull && "scale-0 w-0")}>
           <span className="text-blue-600">Flow</span>Deck
@@ -110,10 +109,8 @@ export function Sidebar({ className, isMobile = false, onCloseMobile }: SidebarP
         </Button>
       </div>
 
-      {/* Scrollable Nav Content */}
       <ScrollArea className="flex-1 px-3 py-4">
         
-        {/* 1. Main Dashboard Link */}
         <div className="space-y-2">
           <NavItem 
               icon={LayoutDashboard} 
@@ -127,10 +124,8 @@ export function Sidebar({ className, isMobile = false, onCloseMobile }: SidebarP
 
         <Separator className="my-4" />
 
-        {/* 2. Boards Section (Collapsible) */}
         <div className="space-y-2 pb-4">
             {showFull ? (
-                // Expanded State: Accordion
                 <div className="space-y-1">
                     <button 
                         onClick={() => setIsBoardsOpen(!isBoardsOpen)}
@@ -140,7 +135,6 @@ export function Sidebar({ className, isMobile = false, onCloseMobile }: SidebarP
                         {isBoardsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     </button>
 
-                    {/* Boards List + Create Button */}
                     {isBoardsOpen && (
                         <div className="space-y-1 animate-in slide-in-from-top-1 duration-200">
                             <Button
@@ -298,7 +292,7 @@ function BoardNavItem({ board, isActive, onClick, onDelete, onRename }: BoardNav
             <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button 
+                        <Button
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8 hover:bg-gray-200"

@@ -1,9 +1,12 @@
+import { api } from '@/lib/api';
 import { create } from 'zustand';
-
 interface User {
   id: string;
   email: string;
   name: string;
+  bio?: string;
+  theme?: string;           // ✅ New
+  notifications?: any;      // ✅ New (JSON)
 }
 
 interface AuthState {
@@ -14,9 +17,13 @@ interface AuthState {
   setUser: (user: User | null) => void;
   logout: () => void;
   hydrate: () => void;
+
+      // ✅ New Actions
+  updateProfile: (data: Partial<User>) => Promise<void>;
+    changePassword: (data: { currentPassword: string; newPassword: string }) => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   token: null, // ✅ Don't read localStorage here
   user: null,
   isHydrated: false,
@@ -44,4 +51,35 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ token, isHydrated: true });
     }
   },
+
+
+    // ✅ Real Profile Update
+  updateProfile: async (data: Partial<User>) => {
+    try {
+        const res = await api.patch('/api/users/profile', data);
+        const currentUser = get().user;
+        if (currentUser) {
+             // Merge existing user data with updates from backend
+             set({ user: { ...currentUser, ...res.data.user } });
+        }
+        
+        // ✅ Apply Theme Immediately if it changed
+        if (data.theme) {
+            if (data.theme === 'dark') document.documentElement.classList.add('dark');
+            else document.documentElement.classList.remove('dark');
+        }
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || "Failed to update profile");
+    }
+  },
+
+    
+    // ✅ Real Password Change
+    changePassword: async (data) => {
+        try {
+            await api.post('/api/users/change-password', data);
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || "Failed to change password");
+        }
+    }
 }));
