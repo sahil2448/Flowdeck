@@ -44,7 +44,6 @@ export default function BoardPage() {
     return (
       <AppLayout>
         <div className="h-full flex items-center justify-center">
-             {/* Simple loading spinner */}
              <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
         </div>
       </AppLayout>
@@ -55,22 +54,19 @@ export default function BoardPage() {
     <AppLayout>
       <div className="flex flex-col h-full bg-gray-100/50">
         
-        {/* ✅ BOARD HEADER */}
         <header className="h-16 bg-white border-b px-4 sm:px-6 flex items-center justify-between shrink-0 gap-4">
             
-            {/* Left: Mobile Trigger + Board Title */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="sm:hidden">
                     <MobileSidebar />
                 </div>
-                <div className="flex flex-col min-w-0">
-                    <h1 className="text-lg font-bold text-gray-900 sm:truncate sm:leading-tight">
-                        {board.title}
-                    </h1>
-                </div>
+            <div className="flex-1 min-w-0  flex flex-col justify-center"> 
+    <h1 className="text-lg w-full font-bold text-gray-900 truncate leading-tight">
+        {board.title}
+    </h1>
+</div>
             </div>
 
-            {/* Center: Search */}
             <div className="flex-[2] max-w-md flex justify-center">
                 <BoardSearch 
                     boards={boards}
@@ -81,9 +77,7 @@ export default function BoardPage() {
                 />
             </div>
 
-            {/* Right: Add List + User */}
             <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end">
-  {/* Mobile search trigger */}
             <MobileSearch boards={boards} onSelectBoard={handleSelectBoard} />
 
             <Button size="sm" onClick={() => setShowCreateList(true)}>
@@ -94,7 +88,6 @@ export default function BoardPage() {
           </div>
         </header>
 
-        {/* Kanban Board Area */}
         <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
           <KanbanBoard board={board} />
         </div>

@@ -9,6 +9,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useDroppable } from "@dnd-kit/core";
 import { RenameListDialog } from "./RenameListDialog";
 import { DeleteListDialog } from "./DeleteListDialog";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./ui/tooltip";
 
 interface CardData {
   id: string;
@@ -58,19 +59,34 @@ export function KanbanList({ list, activeCardId, dragHandleProps }: KanbanListPr
           {/* Header with drag handle and actions */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <Button
+ <Tooltip>
+      <TooltipTrigger asChild>
+             <Button
                 variant="ghost"
                 size="icon"
                 className="p-1 cursor-grab"
                 {...(dragHandleProps || {})}
               >
                 <GripVertical size={18} />
-              </Button>
+                              </Button>
+
+            </TooltipTrigger>
+                        <TooltipContent>
+              <p>                Drag List
+</p>
+              </TooltipContent>
+
+            </Tooltip>
+
+
+
               <h3 className="font-semibold text-lg">{list.title}</h3>
             </div>
             <div className="flex items-center gap-2 relative">
               <span className="text-sm text-gray-500">{cards.length}</span>
-              <Button
+              <Tooltip>
+      <TooltipTrigger asChild>
+         <Button
                 size="icon"
                 variant="ghost"
                 className="p-1"
@@ -79,6 +95,14 @@ export function KanbanList({ list, activeCardId, dragHandleProps }: KanbanListPr
               >
                 <MoreVertical size={18} />
               </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+              <p>More options</p>
+              </TooltipContent>
+          <TooltipTrigger/>
+
+              </Tooltip>
+             
               {menuOpen && (
                 <div
                   ref={menuRef}
