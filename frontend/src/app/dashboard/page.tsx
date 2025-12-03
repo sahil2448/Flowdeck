@@ -10,12 +10,13 @@ import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import AppLayout from "@/components/AppLayout";
 import { BoardSearch } from "@/components/BoardSearch";
-import { MobileSidebar } from "@/components/MobileSidebar"; // ✅ Import MobileSidebar
-import { UserNav } from "@/components/UserNav"; // ✅ Import UserNav
+import { MobileSidebar } from "@/components/MobileSidebar";
+import { UserNav } from "@/components/UserNav";
+import { MobileSearch } from "@/components/MobileSearch"; // ✅ NEW
 
 export default function DashboardPage() {
   useAuthRedirect();
-  
+
   const boards = useBoardsStore((s) => s.boards);
   const loading = useBoardsStore((s) => s.loading);
   const fetchBoards = useBoardsStore((s) => s.fetchBoards);
@@ -32,60 +33,56 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      {/* ✅ NEW UNIFIED HEADER */}
+      {/* Header */}
       <header className="h-16 bg-white border-b px-4 sm:px-6 flex items-center justify-between shrink-0 gap-4">
-        
         {/* Left: Mobile Menu & Title */}
         <div className="flex items-center gap-3 flex-1">
-           <div className="sm:hidden">
-             <MobileSidebar />
-           </div>
-           <h1 className="text-xl font-bold text-gray-900 hidden sm:block">Dashboard</h1>
-           <h1 className="text-xl font-bold text-gray-900 sm:hidden">FlowDeck</h1>
+          <div className="sm:hidden">
+            <MobileSidebar />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900 hidden sm:block">Dashboard</h1>
+          <h1 className="text-xl font-bold text-gray-900 sm:hidden">FlowDeck</h1>
         </div>
 
-        {/* Center: Search Bar (Absolute Center or Flex Center) */}
-        <div className="flex-[2] max-w-md flex justify-center">
-           <BoardSearch 
-              boards={boards}
-              onSelectBoard={handleSelectBoard}
-              dropdownMode="absolute"
-              inputClass="bg-gray-100/50 border-transparent focus:bg-white focus:border-blue-200 transition-all h-9 w-full min-w-[200px] sm:min-w-[300px]"
-              containerClass="w-full max-w-md"
-           />
+        <div className="flex-[2] max-w-md justify-center hidden sm:flex">
+          <BoardSearch
+            boards={boards}
+            onSelectBoard={handleSelectBoard}
+            dropdownMode="absolute"
+            inputClass="bg-gray-100/50 border-transparent focus:bg-white focus:border-blue-200 transition-all h-9 w-full min-w-[300px]"
+            containerClass="w-full max-w-md"
+          />
         </div>
 
-        {/* Right: Actions & Profile */}
-        <div className="flex items-center gap-3 flex-1 justify-end">
-           <Button 
-             size="sm"
-             type="submit"
-             onClick={() => setShowCreateDialog(true)} 
-             className="cursor-pointer"
-             
-           >
-             <PlusIcon className="w-4 h-4" />
-             <span>New Board</span>
-           </Button>
-           {/* Mobile Icon Button */}
-           <Button 
-             size="icon"
-             variant="ghost"
-             onClick={() => setShowCreateDialog(true)} 
-             className="sm:hidden text-blue-600"
-           >
-             <PlusIcon className="w-5 h-5" />
-           </Button>
-           
-           {/* ✅ User Profile Dropdown */}
-           <UserNav />
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end">
+          <MobileSearch boards={boards} onSelectBoard={handleSelectBoard} />
+
+          <Button
+            size="sm"
+            type="button"
+            onClick={() => setShowCreateDialog(true)}
+            className="hidden sm:inline-flex cursor-pointer"
+          >
+            <PlusIcon className="w-4 h-4 mr-2" />
+            <span>New Board</span>
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => setShowCreateDialog(true)}
+            className="sm:hidden text-blue-600"
+          >
+            <PlusIcon className="w-5 h-5" />
+          </Button>
+
+          {/* User profile dropdown */}
+          <UserNav />
         </div>
       </header>
 
       {/* Main Scrollable Content */}
       <main className="flex-1 overflow-y-auto p-6 bg-gray-50/50">
         <div className="max-w-7xl mx-auto">
-          {/* Boards Grid */}
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, index) => (
@@ -113,7 +110,7 @@ export default function DashboardPage() {
                 >
                   <CardHeader>
                     <CardTitle className="group-hover:text-blue-600 transition-colors">
-                        {board.title}
+                      {board.title}
                     </CardTitle>
                     <CardDescription className="line-clamp-2">
                       {board.description || "No description provided"}
@@ -124,11 +121,8 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-        
-        <CreateBoardDialog
-          open={showCreateDialog}
-          onOpenChange={setShowCreateDialog}
-        />
+
+        <CreateBoardDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
       </main>
     </AppLayout>
   );

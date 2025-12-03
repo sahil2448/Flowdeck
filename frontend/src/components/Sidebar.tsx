@@ -91,7 +91,7 @@ export function Sidebar({ className, isMobile = false, onCloseMobile }: SidebarP
       )}
     >
       <div className="flex items-center justify-between h-16 px-4 border-b shrink-0">
-        <div className={cn("flex items-center gap-2 font-bold text-xl overflow-hidden transition-all", !showFull && "scale-0 w-0")}>
+        <div onClick={()=>router.push("/dashboard")} className={cn("cursor-pointer flex items-center gap-2 font-bold text-xl overflow-hidden transition-all", !showFull && "scale-0 w-0")}>
           <span className="text-blue-600">Flow</span>Deck
         </div>
         

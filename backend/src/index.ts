@@ -34,7 +34,6 @@ app.use("/api/tags",tagRoutes)
 app.use('/api/activity', activityRoutes); //  Add this
 app.use('/api/users', userRoutes); //  Now /api/users/profile works!
 
-
 // Error handlers (MUST be last!)
 app.use(notFoundHandler);  // 404 for undefined routes
 app.use(errorHandler);      // Centralized error handling

@@ -12,6 +12,7 @@ import AppLayout from "@/components/AppLayout";
 import { BoardSearch } from "@/components/BoardSearch";
 import { MobileSidebar } from "@/components/MobileSidebar";
 import { UserNav } from "@/components/UserNav";
+import { MobileSearch } from "@/components/MobileSearch";
 
 export default function BoardPage() {
   useAuthRedirect();
@@ -63,11 +64,9 @@ export default function BoardPage() {
                     <MobileSidebar />
                 </div>
                 <div className="flex flex-col min-w-0">
-                    <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">
+                    <h1 className="text-lg font-bold text-gray-900 sm:truncate sm:leading-tight">
                         {board.title}
                     </h1>
-                    {/* Optional: Breadcrumb or description */}
-                    {/* <span className="text-xs text-gray-500 hidden sm:block">Project Board</span> */}
                 </div>
             </div>
 
@@ -83,17 +82,16 @@ export default function BoardPage() {
             </div>
 
             {/* Right: Add List + User */}
-            <div className="flex items-center gap-3 flex-1 justify-end">
-                <Button 
-                    size="sm" 
-                    onClick={() => setShowCreateList(true)} 
-                    // className="bg-blue-600 hover:bg-blue-700 shadow-sm"
-                >
-                    <PlusIcon className="w-4 h-4 sm:mr-2" /> 
-                    <span className="hidden sm:inline">Add List</span>
-                </Button>
-                <UserNav />
-            </div>
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end">
+  {/* Mobile search trigger */}
+            <MobileSearch boards={boards} onSelectBoard={handleSelectBoard} />
+
+            <Button size="sm" onClick={() => setShowCreateList(true)}>
+              <PlusIcon className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Add List</span>
+            </Button>
+            <UserNav />
+          </div>
         </header>
 
         {/* Kanban Board Area */}
