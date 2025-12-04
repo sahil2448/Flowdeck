@@ -97,11 +97,11 @@ export function KanbanCard({ card }: KanbanCardProps) {
           
           <div className="flex flex-col gap-2">
             <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-          {card.description && (
+          {/* {card.description && (
             <CardDescription className="text-xs line-clamp-2">
               {card.description}
             </CardDescription>
-          )}
+          )} */}
           </div>
           
                         <Tooltip>

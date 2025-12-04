@@ -1,11 +1,4 @@
-import { Server as HTTPServer } from 'http';
-import { Server as SocketIOServer } from 'socket.io';
-
-export interface SocketUser {
-  userId: string;
-  tenantId: string;
-  name: string;
-}
+import { Server, Socket } from 'socket.io';
 
 export interface ServerToClientEvents {
   newComment: (data: any) => void;
@@ -26,14 +19,20 @@ export interface InterServerEvents {
 }
 
 export interface SocketData {
-  user?: SocketUser;
+  userId?: string;
+  tenantId?: string;
 }
 
-export type TypedServer = SocketIOServer<
+export type TypedServer = Server<
   ClientToServerEvents,
   ServerToClientEvents,
   InterServerEvents,
   SocketData
 >;
 
-export type TypedSocket = Parameters<Parameters<TypedServer['on']>[1]>[0];
+export type TypedSocket = Socket<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  InterServerEvents,
+  SocketData
+>;

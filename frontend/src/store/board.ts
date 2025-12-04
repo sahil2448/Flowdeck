@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { api } from '@/lib/api';
+import { api, commentApi } from '@/lib/api';
 
 interface Card {
   id: string;
@@ -58,6 +58,7 @@ interface BoardState {
   addComment: (cardId: string, comment: Comment) => void;
   addCommentOptimistic: (cardId: string, text: string) => Promise<void>;
   deleteComment: (cardId: string, commentId: string) => Promise<void>;
+    updateComment: (cardId: string, commentId: string, content: string) => Promise<void>;
   updateCommentLocal: (cardId: string, commentId: string, updates: Partial<Comment>) => void;
 }
 
@@ -290,100 +291,169 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       api.patch(`/api/lists/${l.id}`, { position: l.position })
     ));
   },
+// ========== COMMENT METHODS ==========
 
-  // ========== COMMENT METHODS ==========
-
-  fetchComments: async (cardId: string) => {
-    try {
-      const res = await api.get(`/api/cards/${cardId}/comments`);
-      set((state) => ({
-        comments: { ...state.comments, [cardId]: res.data.comments || [] },
-      }));
-    } catch (error: any) {
-      console.error('Failed to fetch comments:', error);
-    }
-  },
-
-  addComment: (cardId: string, comment: Comment) => {
-    set((state) => ({
-      comments: {
-        ...state.comments,
-        [cardId]: [comment, ...(state.comments[cardId] || [])],
-      },
+fetchComments: async (cardId: string) => {
+  try {
+    const res = await commentApi.getAll(cardId); // ✅ Calls /api/comments/card/:cardId
+    
+    // Map backend response to frontend format
+    const comments = res.data.comments.map((c: any) => ({
+      id: c.id,
+      cardId: c.cardId,
+      userId: c.userId,
+      userName: c.user?.name || 'Unknown User',
+      text: c.content, // Backend uses 'content', frontend uses 'text'
+      content: c.content,
+      createdAt: new Date(c.createdAt),
+      user: c.user,
     }));
-  },
 
-  addCommentOptimistic: async (cardId: string, text: string) => {
-    const tempId = `temp-${Date.now()}`;
-    const optimisticComment: Comment = {
-      id: tempId,
-      cardId,
-      userId: 'current-user',
-      userName: 'You',
-      text,
-      createdAt: new Date(),
+    set((state) => ({
+      comments: { ...state.comments, [cardId]: comments },
+    }));
+  } catch (error: any) {
+    console.error('Failed to fetch comments:', error);
+  }
+},
+
+addComment: (cardId: string, comment: Comment) => {
+  set((state) => ({
+    comments: {
+      ...state.comments,
+      [cardId]: [comment, ...(state.comments[cardId] || [])],
+    },
+  }));
+},
+
+addCommentOptimistic: async (cardId: string, text: string) => {
+  const tempId = `temp-${Date.now()}`;
+  const optimisticComment: Comment = {
+    id: tempId,
+    cardId,
+    userId: 'current-user',
+    userName: 'You',
+    text,
+    createdAt: new Date(),
+  };
+
+  // Optimistic add
+  get().addComment(cardId, optimisticComment);
+
+  try {
+    const res = await commentApi.create({ 
+      cardId, 
+      content: text // Backend validation expects 'content'
+    });
+    
+    // Map backend response
+    const savedComment: Comment = {
+      id: res.data.comment.id,
+      cardId: res.data.comment.cardId,
+      userId: res.data.comment.userId,
+      userName: res.data.comment.user?.name || 'You',
+      text: res.data.comment.content,
+      createdAt: new Date(res.data.comment.createdAt),
     };
 
-    // Optimistic add
-    get().addComment(cardId, optimisticComment);
-
-    try {
-      const res = await api.post(`/api/cards/${cardId}/comments`, { text });
-      const savedComment = res.data.comment;
-
-      // Replace temp comment with real one
-      set((state) => ({
-        comments: {
-          ...state.comments,
-          [cardId]: state.comments[cardId]?.map((c) =>
-            c.id === tempId ? savedComment : c
-          ) || [],
-        },
-      }));
-    } catch (error: any) {
-      // Remove optimistic comment on failure
-      set((state) => ({
-        comments: {
-          ...state.comments,
-          [cardId]: state.comments[cardId]?.filter((c) => c.id !== tempId) || [],
-        },
-      }));
-      console.error('Failed to add comment:', error);
-      throw error;
-    }
-  },
-
-  deleteComment: async (cardId: string, commentId: string) => {
-    const previousComments = get().comments[cardId];
-
-    // Optimistic delete
-    set((state) => ({
-      comments: {
-        ...state.comments,
-        [cardId]: state.comments[cardId]?.filter((c) => c.id !== commentId) || [],
-      },
-    }));
-
-    try {
-      await api.delete(`/api/cards/${cardId}/comments/${commentId}`);
-    } catch (error: any) {
-      // Rollback
-      set((state) => ({
-        comments: { ...state.comments, [cardId]: previousComments },
-      }));
-      console.error('Failed to delete comment:', error);
-      throw error;
-    }
-  },
-
-  updateCommentLocal: (cardId: string, commentId: string, updates: Partial<Comment>) => {
+    // Replace temp comment with real one
     set((state) => ({
       comments: {
         ...state.comments,
         [cardId]: state.comments[cardId]?.map((c) =>
-          c.id === commentId ? { ...c, ...updates } : c
+          c.id === tempId ? savedComment : c
         ) || [],
       },
     }));
-  },
-}));
+  } catch (error: any) {
+    // Remove optimistic comment on failure
+    set((state) => ({
+      comments: {
+        ...state.comments,
+        [cardId]: state.comments[cardId]?.filter((c) => c.id !== tempId) || [],
+      },
+    }));
+    console.error('Failed to add comment:', error);
+    throw error;
+  }
+},
+
+deleteComment: async (cardId: string, commentId: string) => {
+  const previousComments = get().comments[cardId];
+
+  // Optimistic delete
+  set((state) => ({
+    comments: {
+      ...state.comments,
+      [cardId]: state.comments[cardId]?.filter((c) => c.id !== commentId) || [],
+    },
+  }));
+
+  try {
+    await commentApi.delete(commentId); // ✅ Calls /api/comments/:id
+  } catch (error: any) {
+    // Rollback
+    set((state) => ({
+      comments: { ...state.comments, [cardId]: previousComments },
+    }));
+    console.error('Failed to delete comment:', error);
+    throw error;
+  }
+},
+
+updateComment: async (cardId: string, commentId: string, content: string) => {
+  const previousComments = get().comments[cardId];
+
+  // Optimistic update
+  set((state) => ({
+    comments: {
+      ...state.comments,
+      [cardId]: state.comments[cardId]?.map((c) =>
+        c.id === commentId ? { ...c, text: content } : c
+      ) || [],
+    },
+  }));
+
+  try {
+    const res = await commentApi.update(commentId, { content });
+    
+    // Sync with backend response
+    const updatedComment: Comment = {
+      id: res.data.comment.id,
+      cardId: res.data.comment.cardId,
+      userId: res.data.comment.userId,
+      userName: res.data.comment.user?.name || 'User',
+      text: res.data.comment.content,
+      createdAt: new Date(res.data.comment.createdAt),
+    };
+
+    set((state) => ({
+      comments: {
+        ...state.comments,
+        [cardId]: state.comments[cardId]?.map((c) =>
+          c.id === commentId ? updatedComment : c
+        ) || [],
+      },
+    }));
+  } catch (error: any) {
+    // Rollback
+    set((state) => ({
+      comments: { ...state.comments, [cardId]: previousComments },
+    }));
+    console.error('Failed to update comment:', error);
+    throw error;
+  }
+},
+
+updateCommentLocal: (cardId: string, commentId: string, updates: Partial<Comment>) => {
+  set((state) => ({
+    comments: {
+      ...state.comments,
+      [cardId]: state.comments[cardId]?.map((c) =>
+        c.id === commentId ? { ...c, ...updates } : c
+      ) || [],
+    },
+  }));
+},
+
+}))

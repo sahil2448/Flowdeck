@@ -10,7 +10,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { 
   AlignLeft, Clock, MessageSquare, Paperclip, Tag, 
-  Trash2, User, X, Send
+  Trash2, User, X, Send,
+  TrashIcon
 } from "lucide-react";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { format } from "date-fns";
@@ -27,12 +28,13 @@ interface CardDetailModalProps {
 
 export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps) {
   const { user } = useAuthStore();
-  const { updateCard, addCommentOptimistic, deleteComment, fetchComments, addComment, comments: allComments } = useBoardStore();
+  const { updateCard, addCommentOptimistic, deleteComment, fetchComments, addComment, deleteCard, comments: allComments } = useBoardStore();
   
   const [title, setTitle] = useState(card?.title || "");
   const [description, setDescription] = useState(card?.description || "");
   const [comment, setComment] = useState("");
   const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [loading, setLoading] = useState(false);
   
   const comments = allComments[card?.id] || [];
 
@@ -118,8 +120,10 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
     }
   };
 
-  const handleDeleteCard = () => {
+  const handleDeleteCard = async() => {
     if (confirm("Are you sure you want to delete this card?")) {
+        await deleteCard(card.id)
+        setLoading(true);
       toast.success("Card deleted");
       onClose();
     }
@@ -172,14 +176,16 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
                 <Paperclip className="h-4 w-4" /> Attach
               </Button>
               <div className="ml-auto">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
-                  onClick={handleDeleteCard}
-                >
-                  <Trash2 className="h-4 w-4" /> Delete
-                </Button>
+                <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDeleteCard}
+              disabled={loading}
+              className="flex items-center gap-1"
+            >
+              <TrashIcon className="w-4 h-4" />
+              Delete
+            </Button>
               </div>
             </div>
 
