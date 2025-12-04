@@ -1,3 +1,4 @@
+'use client'
 import { useRef, useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CardDetailDialog } from "./CardDetailDialog";
@@ -7,6 +8,8 @@ import { GripHorizontal, GripVertical } from "lucide-react";
 import {   Tooltip,
   TooltipContent,
   TooltipTrigger, } from "@/components/ui/tooltip";
+import { CardDetailModal } from "./CardDetailModal";
+import {Card as CardType} from "../types/index"
 interface CardData {
   id: string;
   title: string;
@@ -19,6 +22,8 @@ interface KanbanCardProps {
 
 export function KanbanCard({ card }: KanbanCardProps) {
   const [showDetail, setShowDetail] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
+
 
   // Use ref for pointer tracking
   const pointerDownRef = useRef(false);
@@ -66,6 +71,8 @@ export function KanbanCard({ card }: KanbanCardProps) {
       // threshold for drag vs click, adjust as needed
       if (dx < 5 && dy < 5) {
         setShowDetail(true); // it's a click
+                setSelectedCard(card as CardType); 
+
       }
       pointerDownRef.current = false;
     }
@@ -121,10 +128,16 @@ export function KanbanCard({ card }: KanbanCardProps) {
       </Tooltip>
     </div>
       
-      <CardDetailDialog
+      {/* <CardDetailDialog
         open={showDetail}
         onOpenChange={setShowDetail}
         card={card}
+      /> */}
+      <CardDetailModal
+        card={selectedCard}
+        isOpen={!!selectedCard}
+        onClose={() => setSelectedCard(null)}
+        onUpdate={(id, data) => console.log("Update", id, data)}
       />
     </>
   );

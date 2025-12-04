@@ -30,7 +30,7 @@ export default function BoardPage() {
   const { boards, fetchBoards } = useBoardsStore();
 
   useEffect(() => { fetchBoards(); }, [fetchBoards]);
-  
+
   useEffect(() => {
     if (boardId) { fetchBoard(boardId); }
     return () => { reset(); };
@@ -44,7 +44,7 @@ export default function BoardPage() {
     return (
       <AppLayout>
         <div className="h-full flex items-center justify-center">
-             <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
         </div>
       </AppLayout>
     );
@@ -53,31 +53,30 @@ export default function BoardPage() {
   return (
     <AppLayout>
       <div className="flex flex-col h-full bg-gray-100/50">
-        
+
         <header className="h-16 bg-white border-b px-4 sm:px-6 flex items-center justify-between shrink-0 gap-4">
-            
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="sm:hidden">
-                    <MobileSidebar />
-                </div>
-            <div className="flex-1 min-w-0  flex flex-col justify-center"> 
-    <h1 className="text-lg w-full font-bold text-gray-900 truncate leading-tight">
-        {board.title}
-    </h1>
-</div>
-            </div>
 
-            <div className="flex-[2] max-w-md flex justify-center">
-                <BoardSearch 
-                    boards={boards}
-                    onSelectBoard={handleSelectBoard}
-                    dropdownMode="absolute"
-                    inputClass="bg-gray-100/50 border-transparent focus:bg-white focus:border-blue-200 transition-all h-9 w-full min-w-[200px] sm:min-w-[300px]"
-                    containerClass="w-full max-w-md hidden sm:flex" // Hide search on tiny screens if needed, or keep
-                />
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="sm:hidden">
+              <MobileSidebar />
             </div>
+            <div className="flex-1 min-w-0  flex flex-col justify-center">
+              <h1 className="text-lg w-full font-bold text-gray-900 truncate leading-tight">
+                {board.title}
+              </h1>
+            </div>
+          </div>
 
-            <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end">
+          <div className="flex-[2] max-w-md flex justify-center">
+            <BoardSearch
+              boards={boards}
+              onSelectBoard={handleSelectBoard}
+              dropdownMode="absolute"
+              inputClass="bg-gray-100/50 border-transparent focus:bg-white focus:border-blue-200 transition-all h-9 w-full min-w-[200px] sm:min-w-[300px]"
+              containerClass="w-full max-w-md hidden sm:flex" // Hide search on tiny screens if needed, or keep
+            />
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end">
             <MobileSearch boards={boards} onSelectBoard={handleSelectBoard} />
 
             <Button size="sm" onClick={() => setShowCreateList(true)}>
@@ -87,7 +86,6 @@ export default function BoardPage() {
             <UserNav />
           </div>
         </header>
-
         <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
           <KanbanBoard board={board} />
         </div>

@@ -21,16 +21,28 @@ export interface Board {
   id: string;
   title: string;
   description: string | null;
-  // Ensure lists is always defined...not possibly undefined
-
   lists: List[];
+}
+
+interface Comment {
+  id: string;
+  cardId: string;
+  userId: string;
+  userName: string;
+  text: string;
+  createdAt: Date;
 }
 
 interface BoardState {
   board: Board | null;
   loading: boolean;
   error: string | null;
-  reset:()=>void
+  
+  // Comments state
+  comments: Record<string, Comment[]>;
+  
+  // Existing methods
+  reset: () => void;
   fetchBoard: (boardId: string) => Promise<void>;
   createList: (boardId: string, title: string) => Promise<void>;
   createCard: (listId: string, title: string, description?: string) => Promise<void>;
@@ -40,41 +52,46 @@ interface BoardState {
   renameList: (listId: string, newTitle: string) => Promise<void>;
   deleteList: (listId: string) => Promise<void>;
   moveList: (listId: string, targetIndex: number) => Promise<void>;
+  
+  // Comment methods
+  fetchComments: (cardId: string) => Promise<void>;
+  addComment: (cardId: string, comment: Comment) => void;
+  addCommentOptimistic: (cardId: string, text: string) => Promise<void>;
+  deleteComment: (cardId: string, commentId: string) => Promise<void>;
+  updateCommentLocal: (cardId: string, commentId: string, updates: Partial<Comment>) => void;
 }
 
 export const useBoardStore = create<BoardState>((set, get) => ({
   board: null,
   loading: false,
   error: null,
+  comments: {},
 
-    // ✅ Add reset function
   reset: () => {
-    set({ board: null, loading: false, error: null });
+    set({ board: null, loading: false, error: null, comments: {} });
   },
 
-fetchBoard: async (boardId: string) => {
-  set({ loading: true, error: null });
-  try {
-    const res = await api.get(`/api/boards/${boardId}`);
-    
-    // ✅ Ensure lists have cards array
-    const board = res.data.board;
-    if (board.lists) {
-      board.lists = board.lists.map((list: any) => ({
-        ...list,
-        cards: list.cards || [] // ✅ Default to empty array if no cards
-      }));
+  fetchBoard: async (boardId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await api.get(`/api/boards/${boardId}`);
+      
+      const board = res.data.board;
+      if (board.lists) {
+        board.lists = board.lists.map((list: any) => ({
+          ...list,
+          cards: list.cards || []
+        }));
+      }
+      
+      set({ board, loading: false });
+    } catch (error: any) {
+      set({ 
+        error: error.response?.data?.error || 'Failed to fetch board', 
+        loading: false 
+      });
     }
-    
-    set({ board, loading: false });
-  } catch (error: any) {
-    set({ 
-      error: error.response?.data?.error || 'Failed to fetch board', 
-      loading: false 
-    });
-  }
-},
-
+  },
 
   createList: async (boardId: string, title: string) => {
     try {
@@ -116,58 +133,71 @@ fetchBoard: async (boardId: string) => {
     }
   },
 
-moveCard: async(cardId: string, fromListId: string, toListId: string, targetIndex: number) => {
-  // Optimistically update UI first!
-  const board = get().board;
-  if (board) {
-    let movedCard: any = null;
+  moveCard: async (cardId: string, fromListId: string, toListId: string, targetIndex: number) => {
+    const board = get().board;
+    if (board) {
+      let movedCard: any = null;
 
-    // Remove card from source list
-    const updatedLists = board.lists.map(list => {
-      if (list.id === fromListId) {
-        return {
-          ...list,
-          cards: list.cards.filter(card => {
-            if (card.id === cardId) {
-              movedCard = card;
-              return false;
-            }
-            return true;
-          }),
-        };
-      }
-      return { ...list };
-    });
+      const updatedLists = board.lists.map(list => {
+        if (list.id === fromListId) {
+          return {
+            ...list,
+            cards: list.cards.filter(card => {
+              if (card.id === cardId) {
+                movedCard = card;
+                return false;
+              }
+              return true;
+            }),
+          };
+        }
+        return { ...list };
+      });
 
-    // Insert into target list at correct position
-    if (movedCard) {
-      const targetList = updatedLists.find(l => l.id === toListId);
-      if (targetList) {
-        targetList.cards.splice(targetIndex, 0, { ...movedCard, listId: toListId });
-        // Re-number positions for clean sorting
-        targetList.cards.forEach((card, i) => (card.position = i));
-        const prevList = updatedLists.find(l => l.id === fromListId);
-        if (prevList) prevList.cards.forEach((card, i) => (card.position = i));
+      if (movedCard) {
+        const targetList = updatedLists.find(l => l.id === toListId);
+        if (targetList) {
+          targetList.cards.splice(targetIndex, 0, { ...movedCard, listId: toListId });
+          targetList.cards.forEach((card, i) => (card.position = i));
+          const prevList = updatedLists.find(l => l.id === fromListId);
+          if (prevList) prevList.cards.forEach((card, i) => (card.position = i));
+        }
       }
+
+      set({ board: { ...board, lists: updatedLists } });
+
+      api.patch(`/api/cards/${cardId}`, {
+        listId: toListId,
+        position: targetIndex,
+      }).catch((error: any) => {
+        console.error('Failed to move card:', error);
+      });
     }
-
-    set({ board: { ...board, lists: updatedLists } });
-
-    // After UI mutation (no delay), sync to backend
-    api.patch(`/api/cards/${cardId}`, {
-      listId: toListId,
-      position: targetIndex,
-    }).catch((error: any) => {
-      // Optional: revert UI, show a toast, etc
-      // toast.error(error.response?.data?.error || 'Failed to move card');
-    });
-  }
-},
+  },
 
   updateCard: async (cardId: string, updates: Partial<Card>) => {
+    const board = get().board;
+    const previousLists = board?.lists;
+
+    // Optimistic update
+    if (board) {
+      set({
+        board: {
+          ...board,
+          lists: board.lists.map(list => ({
+            ...list,
+            cards: list.cards.map(card =>
+              card.id === cardId ? { ...card, ...updates } : card
+            )
+          }))
+        }
+      });
+    }
+
     try {
       const res = await api.patch(`/api/cards/${cardId}`, updates);
-      const board = get().board;
+      
+      // Sync with backend response
       if (board) {
         set({
           board: {
@@ -182,6 +212,10 @@ moveCard: async(cardId: string, fromListId: string, toListId: string, targetInde
         });
       }
     } catch (error: any) {
+      // Rollback on error
+      if (board && previousLists) {
+        set({ board: { ...board, lists: previousLists } });
+      }
       throw new Error(error.response?.data?.error || 'Failed to update card');
     }
   },
@@ -198,65 +232,158 @@ moveCard: async(cardId: string, fromListId: string, toListId: string, targetInde
               ...list,
               cards: list.cards.filter(card => card.id !== cardId)
             }))
-          }
+          },
+          // Clean up comments for deleted card
+          comments: Object.fromEntries(
+            Object.entries(get().comments).filter(([key]) => key !== cardId)
+          )
         });
       }
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to delete card');
     }
   },
-renameList: async (listId: string, newTitle: string) => {
-  try {
-    await api.patch(`/api/lists/${listId}`, { title: newTitle }); // ❗ Backend update
-    set((state) => {
-      if (!state.board) return state;
-      const lists = state.board.lists.map(l =>
-        l.id === listId ? { ...l, title: newTitle } : l
-      );
-      return { board: { ...state.board, lists } };
-    });
-  } catch (error: any) {
-    // Optionally show error to user (toast, alert, etc)
-    console.error("Failed to rename list:", error);
-  }
-},
 
+  renameList: async (listId: string, newTitle: string) => {
+    try {
+      await api.patch(`/api/lists/${listId}`, { title: newTitle });
+      set((state) => {
+        if (!state.board) return state;
+        const lists = state.board.lists.map(l =>
+          l.id === listId ? { ...l, title: newTitle } : l
+        );
+        return { board: { ...state.board, lists } };
+      });
+    } catch (error: any) {
+      console.error("Failed to rename list:", error);
+      throw error;
+    }
+  },
 
-deleteList: async (listId: string) => {
-  try {
-    await api.delete(`/api/lists/${listId}`); // ❗ Backend deletion
-    set((state) => {
-      if (!state.board) return state;
-      const lists = state.board.lists.filter(l => l.id !== listId);
-      return { board: { ...state.board, lists } };
-    });
-  } catch (error: any) {
-    // Optionally show error to user (toast, alert, etc)
-    console.error("Failed to delete list:", error);
-  }
-},
+  deleteList: async (listId: string) => {
+    try {
+      await api.delete(`/api/lists/${listId}`);
+      set((state) => {
+        if (!state.board) return state;
+        const lists = state.board.lists.filter(l => l.id !== listId);
+        return { board: { ...state.board, lists } };
+      });
+    } catch (error: any) {
+      console.error("Failed to delete list:", error);
+      throw error;
+    }
+  },
 
-moveList: async (listId: string, targetIndex: number) => {
-  const board = get().board;
-  if (!board) return;
-  let newLists = [...board.lists];
-  const oldIndex = newLists.findIndex(l => l.id === listId);
-  if (oldIndex === -1 || targetIndex === oldIndex) return;
-  const [movedList] = newLists.splice(oldIndex, 1);
-  newLists.splice(targetIndex, 0, movedList);
+  moveList: async (listId: string, targetIndex: number) => {
+    const board = get().board;
+    if (!board) return;
+    let newLists = [...board.lists];
+    const oldIndex = newLists.findIndex(l => l.id === listId);
+    if (oldIndex === -1 || targetIndex === oldIndex) return;
+    const [movedList] = newLists.splice(oldIndex, 1);
+    newLists.splice(targetIndex, 0, movedList);
 
-  // Renumber all lists for persistence
-  newLists = newLists.map((l, i) => ({ ...l, position: i }));
-  set({ board: { ...board, lists: newLists } });
+    newLists = newLists.map((l, i) => ({ ...l, position: i }));
+    set({ board: { ...board, lists: newLists } });
 
-  // PATCH each list with its updated position (matches backend router)
-  await Promise.all(newLists.map(l =>
-    api.patch(`/api/lists/${l.id}`, { position: l.position })
-  ));
-}
+    await Promise.all(newLists.map(l =>
+      api.patch(`/api/lists/${l.id}`, { position: l.position })
+    ));
+  },
 
+  // ========== COMMENT METHODS ==========
 
+  fetchComments: async (cardId: string) => {
+    try {
+      const res = await api.get(`/api/cards/${cardId}/comments`);
+      set((state) => ({
+        comments: { ...state.comments, [cardId]: res.data.comments || [] },
+      }));
+    } catch (error: any) {
+      console.error('Failed to fetch comments:', error);
+    }
+  },
 
+  addComment: (cardId: string, comment: Comment) => {
+    set((state) => ({
+      comments: {
+        ...state.comments,
+        [cardId]: [comment, ...(state.comments[cardId] || [])],
+      },
+    }));
+  },
+
+  addCommentOptimistic: async (cardId: string, text: string) => {
+    const tempId = `temp-${Date.now()}`;
+    const optimisticComment: Comment = {
+      id: tempId,
+      cardId,
+      userId: 'current-user',
+      userName: 'You',
+      text,
+      createdAt: new Date(),
+    };
+
+    // Optimistic add
+    get().addComment(cardId, optimisticComment);
+
+    try {
+      const res = await api.post(`/api/cards/${cardId}/comments`, { text });
+      const savedComment = res.data.comment;
+
+      // Replace temp comment with real one
+      set((state) => ({
+        comments: {
+          ...state.comments,
+          [cardId]: state.comments[cardId]?.map((c) =>
+            c.id === tempId ? savedComment : c
+          ) || [],
+        },
+      }));
+    } catch (error: any) {
+      // Remove optimistic comment on failure
+      set((state) => ({
+        comments: {
+          ...state.comments,
+          [cardId]: state.comments[cardId]?.filter((c) => c.id !== tempId) || [],
+        },
+      }));
+      console.error('Failed to add comment:', error);
+      throw error;
+    }
+  },
+
+  deleteComment: async (cardId: string, commentId: string) => {
+    const previousComments = get().comments[cardId];
+
+    // Optimistic delete
+    set((state) => ({
+      comments: {
+        ...state.comments,
+        [cardId]: state.comments[cardId]?.filter((c) => c.id !== commentId) || [],
+      },
+    }));
+
+    try {
+      await api.delete(`/api/cards/${cardId}/comments/${commentId}`);
+    } catch (error: any) {
+      // Rollback
+      set((state) => ({
+        comments: { ...state.comments, [cardId]: previousComments },
+      }));
+      console.error('Failed to delete comment:', error);
+      throw error;
+    }
+  },
+
+  updateCommentLocal: (cardId: string, commentId: string, updates: Partial<Comment>) => {
+    set((state) => ({
+      comments: {
+        ...state.comments,
+        [cardId]: state.comments[cardId]?.map((c) =>
+          c.id === commentId ? { ...c, ...updates } : c
+        ) || [],
+      },
+    }));
+  },
 }));
-
-

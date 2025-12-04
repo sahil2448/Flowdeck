@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
-import { logActivity, ActivityType } from '../services/activity.service'; // Add import
+import { logActivity, ActivityType } from '../services/activity.service';
+import { TypedServer } from '../types/socket';
 
 // Add comment to a card
 export async function createComment(req: Request, res: Response) {
@@ -59,7 +60,7 @@ export async function createComment(req: Request, res: Response) {
       },
     });
 
-        // ✅ Get board ID for activity log
+    // Get board ID for activity log
     const cardWithBoard = await prisma.card.findUnique({
       where: { id: cardId },
       include: {
@@ -76,12 +77,26 @@ export async function createComment(req: Request, res: Response) {
       userId: userId!,
       boardId: cardWithBoard!.list.boardId,
       cardId: cardId,
-        tenantId: tenantId,  // ✅ Add this everywhere
-
+      tenantId: tenantId,
       metadata: {
         commentPreview: content.substring(0, 100),
       },
     });
+
+    // ✅ Broadcast to all users in the card room via Socket.io
+    const io: TypedServer = req.app.get('io');
+    const formattedComment = {
+      id: comment.id,
+      cardId: comment.cardId,
+      userId: comment.userId,
+      userName: comment.user.name,
+      text: comment.content,
+      content: comment.content,
+      createdAt: comment.createdAt,
+      user: comment.user,
+    };
+
+    io.to(`card:${cardId}`).emit('newComment', formattedComment);
 
     res.status(201).json({
       message: 'Comment created successfully',
@@ -101,7 +116,6 @@ export async function getComments(req: Request, res: Response) {
   try {
     const { cardId } = req.params;
     const tenantId = req.user?.tenantId;
-    
 
     if (!tenantId) {
       return res.status(401).json({
@@ -183,7 +197,7 @@ export async function updateComment(req: Request, res: Response) {
     const existingComment = await prisma.comment.findFirst({
       where: {
         id,
-        userId, // Only author can edit
+        userId,
         card: {
           list: {
             board: {
@@ -191,6 +205,9 @@ export async function updateComment(req: Request, res: Response) {
             },
           },
         },
+      },
+      include: {
+        card: true,
       },
     });
 
@@ -214,6 +231,21 @@ export async function updateComment(req: Request, res: Response) {
         },
       },
     });
+
+    // ✅ Broadcast update to all users in the card room
+    const io: TypedServer = req.app.get('io');
+    const formattedComment = {
+      id: comment.id,
+      cardId: comment.cardId,
+      userId: comment.userId,
+      userName: comment.user.name,
+      text: comment.content,
+      content: comment.content,
+      createdAt: comment.createdAt,
+      user: comment.user,
+    };
+
+    io.to(`card:${comment.cardId}`).emit('commentUpdated', formattedComment);
 
     res.status(200).json({
       message: 'Comment updated successfully',
@@ -246,7 +278,7 @@ export async function deleteComment(req: Request, res: Response) {
     const existingComment = await prisma.comment.findFirst({
       where: {
         id,
-        userId, // Only author can delete
+        userId,
         card: {
           list: {
             board: {
@@ -264,8 +296,17 @@ export async function deleteComment(req: Request, res: Response) {
       });
     }
 
+    const cardId = existingComment.cardId;
+
     await prisma.comment.delete({
       where: { id },
+    });
+
+    // ✅ Broadcast deletion to all users in the card room
+    const io: TypedServer = req.app.get('io');
+    io.to(`card:${cardId}`).emit('commentDeleted', { 
+      cardId, 
+      commentId: id 
     });
 
     res.status(200).json({

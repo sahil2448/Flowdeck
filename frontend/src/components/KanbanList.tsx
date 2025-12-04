@@ -10,6 +10,8 @@ import { useDroppable } from "@dnd-kit/core";
 import { RenameListDialog } from "./RenameListDialog";
 import { DeleteListDialog } from "./DeleteListDialog";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./ui/tooltip";
+import { CardDetailModal } from "./CardDetailModal";
+import {Card as CardType} from "../types/index"
 
 interface CardData {
   id: string;
@@ -186,6 +188,7 @@ export function KanbanList({ list, activeCardId, dragHandleProps }: KanbanListPr
         onOpenChange={setShowCreateCard}
         listId={list.id}
       />
+
       <RenameListDialog
         open={showRename}
         onOpenChange={setShowRename}
