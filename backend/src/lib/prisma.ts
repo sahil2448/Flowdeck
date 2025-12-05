@@ -21,7 +21,6 @@ export default prisma;
 
 if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma;
 
-// Tenant-scoped client helper (we'll enhance this later for RLS)
 export function getTenantPrisma(tenantId: string) {
-  return prisma; // For now, just return base client
+  return prisma;
 }

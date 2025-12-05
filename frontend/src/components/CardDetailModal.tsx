@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { 
   AlignLeft, Clock, MessageSquare, Paperclip, Tag, 
-  Trash2, User, X, Send,Check,
-  TrashIcon
+  Trash2, User, X, Send, Check, TrashIcon
 } from "lucide-react";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { format } from "date-fns";
@@ -19,6 +18,8 @@ import { useAuthStore } from "@/store/auth";
 import { useBoardStore } from "@/store/board";
 import { toast } from "sonner";
 import { getSocket } from "@/lib/socket";
+import { memberApi } from "@/lib/api";
+import { MemberSelector } from "./MemberSelector";
 
 interface CardDetailModalProps {
   card: any;
@@ -28,38 +29,94 @@ interface CardDetailModalProps {
 
 export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps) {
   const { user } = useAuthStore();
-  const { updateCard, addCommentOptimistic, deleteComment, fetchComments, addComment, deleteCard, comments: allComments } = useBoardStore();
+  const { 
+    updateCard, 
+    addCommentOptimistic, 
+    deleteComment, 
+    fetchComments, 
+    addComment, 
+    deleteCard, 
+    comments: allComments 
+  } = useBoardStore();
   
   const [title, setTitle] = useState(card?.title || "");
   const [description, setDescription] = useState(card?.description || "");
   const [comment, setComment] = useState("");
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [dis,setDis] = useState(false);
+  const [dis, setDis] = useState(false);
+  const [members, setMembers] = useState<any[]>([]);
   
+  const boardId = card?.list?.boardId;
   const comments = allComments[card?.id] || [];
 
-  // Socket.io setup for real-time comments
+  //  useCallback to prevent re-creation
+  const fetchCardMembers = useCallback(async () => {
+    if (!card?.id) return;
+    
+    try {
+      const res = await memberApi.getCardMembers(card.id);
+      setMembers(res.data.members);
+    } catch (error) {
+      console.error('Failed to fetch members:', error);
+      toast.error('Failed to load card members');
+    }
+  }, [card?.id]);
+
+  //  modal opens
+  useEffect(() => {
+    if (isOpen && card?.id) {
+      fetchCardMembers();
+    }
+  }, [isOpen, card?.id, fetchCardMembers]);
+
+  //  listeners for real-time member updates
   useEffect(() => {
     if (!isOpen || !card?.id) return;
 
     const socket = getSocket();
     
-    // Join card-specific room
+    const handleMemberAdded = ({ cardId, member }: any) => {
+      if (cardId === card.id) {
+        setMembers(prev => {
+          // Prevent duplicates
+          if (prev.some(m => m.id === member.id)) return prev;
+          return [...prev, member];
+        });
+      }
+    };
+
+    const handleMemberRemoved = ({ cardId, userId }: any) => {
+      if (cardId === card.id) {
+        setMembers(prev => prev.filter(m => m.id !== userId));
+      }
+    };
+
+    socket.on('memberAdded', handleMemberAdded);
+    socket.on('memberRemoved', handleMemberRemoved);
+
+    return () => {
+      socket.off('memberAdded', handleMemberAdded);
+      socket.off('memberRemoved', handleMemberRemoved);
+    };
+  }, [isOpen, card?.id]);
+
+  useEffect(() => {
+    if (!isOpen || !card?.id) return;
+
+    const socket = getSocket();
+    
     socket.emit('joinCard', card.id);
     
-    // Fetch initial comments
     fetchComments(card.id);
 
-    // Listen for new comments
-    socket.on('newComment', (newComment) => {
+    const handleNewComment = (newComment: any) => {
       if (newComment.cardId === card.id) {
         addComment(card.id, newComment);
       }
-    });
+    };
 
-    // Listen for deleted comments
-    socket.on('commentDeleted', ({ cardId, commentId }) => {
+    const handleCommentDeleted = ({ cardId, commentId }: any) => {
       if (cardId === card.id) {
         useBoardStore.setState((state) => ({
           comments: {
@@ -68,15 +125,19 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
           },
         }));
       }
-    });
+    };
+
+    socket.on('newComment', handleNewComment);
+    socket.on('commentDeleted', handleCommentDeleted);
 
     return () => {
       socket.emit('leaveCard', card.id);
-      socket.off('newComment');
-      socket.off('commentDeleted');
+      socket.off('newComment', handleNewComment);
+      socket.off('commentDeleted', handleCommentDeleted);
     };
-  }, [isOpen, card?.id]);
+  }, [isOpen, card?.id, fetchComments, addComment]);
 
+  //  when card prop changes
   useEffect(() => {
     if (card) {
       setTitle(card.title);
@@ -89,8 +150,10 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
       try {
         await updateCard(card.id, { title });
         toast.success("Title updated");
+        setDis(true);
       } catch (error) {
         setTitle(card.title);
+        toast.error("Failed to update title");
       }
     }
   };
@@ -103,6 +166,7 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
         setIsEditingDesc(false);
       } catch (error) {
         setDescription(card.description || "");
+        toast.error("Failed to update description");
       }
     }
   };
@@ -111,23 +175,48 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
     e.preventDefault();
     if (!comment.trim()) return;
     
-    await addCommentOptimistic(card.id, comment);
-    setComment("");
+    try {
+      await addCommentOptimistic(card.id, comment);
+      setComment("");
+    } catch (error) {
+      toast.error("Failed to add comment");
+    }
   };
 
   const handleDeleteComment = async (commentId: string) => {
     if (confirm("Delete this comment?")) {
-      await deleteComment(card.id, commentId);
+      try {
+        await deleteComment(card.id, commentId);
+      } catch (error) {
+        toast.error("Failed to delete comment");
+      }
     }
   };
 
-  const handleDeleteCard = async() => {
+  const handleDeleteCard = async () => {
     if (confirm("Are you sure you want to delete this card?")) {
-        await deleteCard(card.id)
+      try {
         setLoading(true);
-      toast.success("Card deleted");
-      onClose();
+        await deleteCard(card.id);
+        toast.success("Card deleted");
+        onClose();
+      } catch (error) {
+        toast.error("Failed to delete card");
+      } finally {
+        setLoading(false);
+      }
     }
+  };
+
+  const handleMemberAdded = (member: any) => {
+    setMembers(prev => {
+      if (prev.some(m => m.id === member.id)) return prev;
+      return [...prev, member];
+    });
+  };
+
+  const handleMemberRemoved = (userId: string) => {
+    setMembers(prev => prev.filter(m => m.id !== userId));
   };
 
   if (!card) return null;
@@ -136,31 +225,46 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-5xl max-h-[90vh] p-0 gap-0 overflow-hidden">
         
+        {/* Header Section */}
         <div className="px-6 py-4 border-b bg-white sticky top-0 z-10">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex flex-col justify-baseline min-w-0 object-fill">
+            <div className="flex flex-col justify-baseline min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                    <Input 
-                value={title} 
-                onChange={(e) =>{ setTitle(e.target.value),setDis(false)}}
-                // onBlur={handleTitleBlur}
-                className="text-xl font-bold w-fit text-center border-slate-900 rounded-sm shadow-none px-0 h-auto focus-visible:ring-0 focus-visible:border-b-2 focus-visible:border-blue-500  transition-all" 
-                placeholder="Enter card title"
-              />
+                <Input 
+                  value={title} 
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setDis(false);
+                  }}
+                  className="text-xl font-bold flex-1 border-slate-900 rounded-sm shadow-none px-2 h-auto focus-visible:ring-0 focus-visible:border-b-2 focus-visible:border-blue-500 transition-all" 
+                  placeholder="Enter card title"
+                />
 
-              {card.title !== title && title.trim() && !dis && <Button size="sm" onClick={()=>{handleTitleBlur() , setDis(true)}} className="disabled:bg-gray-400">
-                <Check className="h-4 w-4" />
-              </Button>
-}
-              
+                {card.title !== title && title.trim() && !dis && (
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleTitleBlur()}
+                    className="shrink-0"
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
           
               <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                 <span>in list</span>
-                <Badge variant="secondary" className="font-normal">To Do</Badge>
+                <Badge variant="secondary" className="font-normal">
+                  {card.list?.title || "To Do"}
+                </Badge>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0 hover:bg-gray-100">
+            
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onClose} 
+              className="shrink-0 hover:bg-gray-100"
+            >
               <X className="h-5 w-5" />
             </Button>
           </div>
@@ -172,9 +276,18 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
             
             {/* Quick Actions Bar */}
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" className="gap-2">
-                <User className="h-4 w-4" /> Members
-              </Button>
+              {/* Members Section */}
+              <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md">
+                <User className="h-4 w-4 text-gray-500" />
+                <MemberSelector
+                  cardId={card.id}
+                  boardId={boardId}
+                  assignedMembers={members}
+                  onMemberAdded={handleMemberAdded}
+                  onMemberRemoved={handleMemberRemoved}
+                />
+              </div>
+
               <Button variant="outline" size="sm" className="gap-2">
                 <Tag className="h-4 w-4" /> Labels
               </Button>
@@ -184,17 +297,19 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
               <Button variant="outline" size="sm" className="gap-2">
                 <Paperclip className="h-4 w-4" /> Attach
               </Button>
+              
               <div className="ml-auto">
                 <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDeleteCard}
-              disabled={loading}
-              className="flex items-center gap-1"
-            >
-              <TrashIcon className="w-4 h-4" />
-              Delete
-            </Button>
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteCard}
+                  disabled={loading}
+                  className="flex items-center gap-2"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  {loading ? "Deleting..." : "Delete"}
+                </Button>
               </div>
             </div>
 
@@ -303,34 +418,42 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
 
               {/* Comments List */}
               <div className="space-y-4">
-                {comments.map((c) => (
-                  <div key={c.id} className="flex gap-3 group">
-                    <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarFallback className="bg-gray-100 text-gray-700 text-xs">
-                        {c.userName[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2 mb-1">
-                        <span className="font-semibold text-sm text-gray-900">{c.userName}</span>
-                        <span className="text-xs text-gray-500">
-                          {format(new Date(c.createdAt), "MMM d 'at' h:mm a")}
-                        </span>
-                      </div>
-                      <div className="bg-white border rounded-lg px-3 py-2 text-sm text-gray-700 shadow-sm">
-                        {c.text}
-                      </div>
-                      <div className="flex gap-3 mt-1">
-                        <button 
-                          onClick={() => handleDeleteComment(c.id)}
-                          className="text-xs text-gray-500 hover:text-red-600 hover:underline"
-                        >
-                          Delete
-                        </button>
+                {comments.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    No comments yet. Be the first to comment!
+                  </p>
+                ) : (
+                  comments.map((c) => (
+                    <div key={c.id} className="flex gap-3 group">
+                      <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarFallback className="bg-gray-100 text-gray-700 text-xs">
+                          {c.userName?.[0] || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2 mb-1">
+                          <span className="font-semibold text-sm text-gray-900">
+                            {c.userName}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {format(new Date(c.createdAt), "MMM d 'at' h:mm a")}
+                          </span>
+                        </div>
+                        <div className="bg-white border rounded-lg px-3 py-2 text-sm text-gray-700 shadow-sm">
+                          {c.text}
+                        </div>
+                        <div className="flex gap-3 mt-1">
+                          <button 
+                            onClick={() => handleDeleteComment(c.id)}
+                            className="text-xs text-gray-500 hover:text-red-600 hover:underline"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>

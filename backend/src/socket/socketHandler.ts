@@ -32,6 +32,14 @@ export function initializeSocketHandlers(io: Server): void {
     socket.on('error', (error) => {
       logger.error(`🔴 Socket ${socket.id} error:`, error);
     });
+
+        socket.on('memberAdded', ({ cardId, member }) => {
+      socket.to(`card:${cardId}`).emit('memberAdded', { cardId, member });
+    });
+
+    socket.on('memberRemoved', ({ cardId, userId }) => {
+      socket.to(`card:${cardId}`).emit('memberRemoved', { cardId, userId });
+    });
   });
 
   // Log connection stats every minute
