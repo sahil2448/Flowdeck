@@ -53,7 +53,6 @@ export const useBoardsStore = create<BoardsState>((set, get) => ({
     }
   },
 
-  // ✅ Added Rename Action
   renameBoard: async (id: string, title: string) => {
     try {
         await api.patch(`/api/boards/${id}`, { title });

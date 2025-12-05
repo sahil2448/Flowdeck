@@ -47,6 +47,9 @@ model User {
   memberships    Membership[]
   comments       Comment[]
   activityEvents ActivityEvent[]
+  cardMembers    CardMember[] 
+  attachments    Attachment[]
+
 
   @@index([tenantId])
   @@map("users")
@@ -102,23 +105,39 @@ model List {
 }
 
 model Card {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
   description String?
   listId      String
-  position    Int // fractional ranking or int
-  version     Int      @default(0) // for optimistic locking
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  position    Int
+  version     Int       @default(0)
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   list           List            @relation(fields: [listId], references: [id], onDelete: Cascade)
   comments       Comment[]
   cardTags       CardTag[]
   attachments    Attachment[]
   activityEvents ActivityEvent[]
+  members        CardMember[]
 
   @@index([listId, position])
   @@map("cards")
+}
+model CardMember {
+  id        String   @id @default(uuid())
+  cardId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, userId])
+  @@index([cardId])
+  @@index([userId])
+  @@map("card_members")
 }
 
 model Tag {
@@ -167,12 +186,18 @@ model Attachment {
   id        String   @id @default(uuid())
   filename  String
   url       String
+  fileKey   String? 
+  fileSize  Int?
+  fileType  String?
   cardId    String
+  userId    String? 
   createdAt DateTime @default(now())
 
-  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  card Card  @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([cardId])
+  @@index([userId])
   @@map("attachments")
 }
 

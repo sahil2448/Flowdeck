@@ -38,10 +38,8 @@ interface BoardState {
   loading: boolean;
   error: string | null;
   
-  // Comments state
   comments: Record<string, Comment[]>;
   
-  // Existing methods
   reset: () => void;
   fetchBoard: (boardId: string) => Promise<void>;
   createList: (boardId: string, title: string) => Promise<void>;
@@ -53,7 +51,6 @@ interface BoardState {
   deleteList: (listId: string) => Promise<void>;
   moveList: (listId: string, targetIndex: number) => Promise<void>;
   
-  // Comment methods
   fetchComments: (cardId: string) => Promise<void>;
   addComment: (cardId: string, comment: Comment) => void;
   addCommentOptimistic: (cardId: string, text: string) => Promise<void>;
@@ -180,7 +177,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const board = get().board;
     const previousLists = board?.lists;
 
-    // Optimistic update
+    
     if (board) {
       set({
         board: {
@@ -198,7 +195,6 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     try {
       const res = await api.patch(`/api/cards/${cardId}`, updates);
       
-      // Sync with backend response
       if (board) {
         set({
           board: {
@@ -213,7 +209,6 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         });
       }
     } catch (error: any) {
-      // Rollback on error
       if (board && previousLists) {
         set({ board: { ...board, lists: previousLists } });
       }
@@ -234,7 +229,6 @@ export const useBoardStore = create<BoardState>((set, get) => ({
               cards: list.cards.filter(card => card.id !== cardId)
             }))
           },
-          // Clean up comments for deleted card
           comments: Object.fromEntries(
             Object.entries(get().comments).filter(([key]) => key !== cardId)
           )
@@ -291,19 +285,16 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       api.patch(`/api/lists/${l.id}`, { position: l.position })
     ));
   },
-// ========== COMMENT METHODS ==========
 
 fetchComments: async (cardId: string) => {
   try {
-    const res = await commentApi.getAll(cardId); // ✅ Calls /api/comments/card/:cardId
-    
-    // Map backend response to frontend format
+    const res = await commentApi.getAll(cardId); 
     const comments = res.data.comments.map((c: any) => ({
       id: c.id,
       cardId: c.cardId,
       userId: c.userId,
       userName: c.user?.name || 'Unknown User',
-      text: c.content, // Backend uses 'content', frontend uses 'text'
+      text: c.content,
       content: c.content,
       createdAt: new Date(c.createdAt),
       user: c.user,
@@ -337,16 +328,14 @@ addCommentOptimistic: async (cardId: string, text: string) => {
     createdAt: new Date(),
   };
 
-  // Optimistic add
   get().addComment(cardId, optimisticComment);
 
   try {
     const res = await commentApi.create({ 
       cardId, 
-      content: text // Backend validation expects 'content'
+      content: text 
     });
     
-    // Map backend response
     const savedComment: Comment = {
       id: res.data.comment.id,
       cardId: res.data.comment.cardId,
@@ -356,7 +345,6 @@ addCommentOptimistic: async (cardId: string, text: string) => {
       createdAt: new Date(res.data.comment.createdAt),
     };
 
-    // Replace temp comment with real one
     set((state) => ({
       comments: {
         ...state.comments,
@@ -366,7 +354,6 @@ addCommentOptimistic: async (cardId: string, text: string) => {
       },
     }));
   } catch (error: any) {
-    // Remove optimistic comment on failure
     set((state) => ({
       comments: {
         ...state.comments,
@@ -381,7 +368,6 @@ addCommentOptimistic: async (cardId: string, text: string) => {
 deleteComment: async (cardId: string, commentId: string) => {
   const previousComments = get().comments[cardId];
 
-  // Optimistic delete
   set((state) => ({
     comments: {
       ...state.comments,
@@ -390,9 +376,8 @@ deleteComment: async (cardId: string, commentId: string) => {
   }));
 
   try {
-    await commentApi.delete(commentId); // ✅ Calls /api/comments/:id
+    await commentApi.delete(commentId); 
   } catch (error: any) {
-    // Rollback
     set((state) => ({
       comments: { ...state.comments, [cardId]: previousComments },
     }));
@@ -404,7 +389,6 @@ deleteComment: async (cardId: string, commentId: string) => {
 updateComment: async (cardId: string, commentId: string, content: string) => {
   const previousComments = get().comments[cardId];
 
-  // Optimistic update
   set((state) => ({
     comments: {
       ...state.comments,
@@ -417,7 +401,6 @@ updateComment: async (cardId: string, commentId: string, content: string) => {
   try {
     const res = await commentApi.update(commentId, { content });
     
-    // Sync with backend response
     const updatedComment: Comment = {
       id: res.data.comment.id,
       cardId: res.data.comment.cardId,
@@ -436,7 +419,6 @@ updateComment: async (cardId: string, commentId: string, content: string) => {
       },
     }));
   } catch (error: any) {
-    // Rollback
     set((state) => ({
       comments: { ...state.comments, [cardId]: previousComments },
     }));

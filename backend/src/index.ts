@@ -10,6 +10,7 @@ import commentRoutes from "./routes/comment.routes";
 import tagRoutes from "./routes/tag.routes";
 import userRoutes from "./routes/user.routes";
 import activityRoutes from './routes/activity.routes';
+import memberRoutes from './routes/member.routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger'; 
 import logger from './config/logger';
@@ -59,6 +60,8 @@ app.use('/api/comments', commentRoutes); // Changed from /api/cards to /api/comm
 app.use("/api/tags", tagRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/members', memberRoutes);
+
 
 // Error handlers (MUST be last!)
 app.use(notFoundHandler);  // 404 for undefined routes

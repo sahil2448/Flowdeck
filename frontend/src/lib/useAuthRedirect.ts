@@ -8,7 +8,6 @@ export const useAuthRedirect = () => {
     const isHydrated = useAuthStore((s) => s.isHydrated);
   const router = useRouter();
   useEffect(() => {
-    // ✅ Only redirect after hydration is complete
     if (isHydrated && !token) {
       router.replace("/auth/login");
     }  }, [token, router]);

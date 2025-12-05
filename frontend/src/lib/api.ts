@@ -43,7 +43,7 @@ api.interceptors.response.use(
         toast.error("Session expired. Please login again.");
         
         setTimeout(() => {
-          window.location.href = "/login";
+          window.location.href = "/auth/login";
         }, 1000);
       }
 
@@ -141,6 +141,7 @@ export const apiHelpers = {
   },
 };
 
+
 export const boardApi = {
   getAll: () => api.get("/api/boards"),
   getById: (id: string) => api.get(`/api/boards/${id}`),
@@ -192,5 +193,22 @@ export const authApi = {
     apiHelpers.logout();
   },
 };
+
+export const memberApi = {
+  // Get all board members (for dropdown)
+  getBoardMembers: (boardId: string) => api.get(`/api/members/board/${boardId}`),
+  
+  // Get card members
+  getCardMembers: (cardId: string) => api.get(`/api/members/card/${cardId}`),
+  
+  // Add member to card
+  addMember: (cardId: string, userId: string) =>
+    api.post(`/api/members/card/${cardId}`, { userId }),
+  
+  // Remove member from card
+  removeMember: (cardId: string, userId: string) =>
+    api.delete(`/api/members/card/${cardId}/user/${userId}`),
+};
+
 
 export default api;

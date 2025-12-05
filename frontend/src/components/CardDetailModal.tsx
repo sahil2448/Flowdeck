@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { 
   AlignLeft, Clock, MessageSquare, Paperclip, Tag, 
-  Trash2, User, X, Send,
+  Trash2, User, X, Send,Check,
   TrashIcon
 } from "lucide-react";
 import { RichTextEditor } from "@/components/RichTextEditor";
@@ -35,6 +35,7 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
   const [comment, setComment] = useState("");
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [dis,setDis] = useState(false);
   
   const comments = allComments[card?.id] || [];
 
@@ -135,17 +136,25 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-5xl max-h-[90vh] p-0 gap-0 overflow-hidden">
         
-        {/* Header Section */}
         <div className="px-6 py-4 border-b bg-white sticky top-0 z-10">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <Input 
+            <div className="flex flex-col justify-baseline min-w-0 object-fill">
+              <div className="flex items-center gap-2">
+                    <Input 
                 value={title} 
-                onChange={(e) => setTitle(e.target.value)}
-                onBlur={handleTitleBlur}
-                className="text-xl font-bold border-none shadow-none px-0 h-auto focus-visible:ring-0 focus-visible:border-b-2 focus-visible:border-blue-500 rounded-none transition-all" 
-                placeholder="Card title"
+                onChange={(e) =>{ setTitle(e.target.value),setDis(false)}}
+                // onBlur={handleTitleBlur}
+                className="text-xl font-bold w-fit text-center border-slate-900 rounded-sm shadow-none px-0 h-auto focus-visible:ring-0 focus-visible:border-b-2 focus-visible:border-blue-500  transition-all" 
+                placeholder="Enter card title"
               />
+
+              {card.title !== title && title.trim() && !dis && <Button size="sm" onClick={()=>{handleTitleBlur() , setDis(true)}} className="disabled:bg-gray-400">
+                <Check className="h-4 w-4" />
+              </Button>
+}
+              
+              </div>
+          
               <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                 <span>in list</span>
                 <Badge variant="secondary" className="font-normal">To Do</Badge>

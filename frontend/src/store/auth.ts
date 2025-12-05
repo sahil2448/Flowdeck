@@ -5,8 +5,8 @@ interface User {
   email: string;
   name: string;
   bio?: string;
-  theme?: string;           // ✅ New
-  notifications?: any;      // ✅ New (JSON)
+  theme?: string; 
+  notifications?: any; 
 }
 
 interface AuthState {
@@ -18,13 +18,12 @@ interface AuthState {
   logout: () => void;
   hydrate: () => void;
 
-      // ✅ New Actions
   updateProfile: (data: Partial<User>) => Promise<void>;
     changePassword: (data: { currentPassword: string; newPassword: string }) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  token: null, // ✅ Don't read localStorage here
+  token: null,
   user: null,
   isHydrated: false,
 
@@ -53,17 +52,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
 
-    // ✅ Real Profile Update
   updateProfile: async (data: Partial<User>) => {
     try {
         const res = await api.patch('/api/users/profile', data);
         const currentUser = get().user;
         if (currentUser) {
-             // Merge existing user data with updates from backend
              set({ user: { ...currentUser, ...res.data.user } });
         }
         
-        // ✅ Apply Theme Immediately if it changed
         if (data.theme) {
             if (data.theme === 'dark') document.documentElement.classList.add('dark');
             else document.documentElement.classList.remove('dark');
@@ -74,7 +70,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
     
-    // ✅ Real Password Change
     changePassword: async (data) => {
         try {
             await api.post('/api/users/change-password', data);

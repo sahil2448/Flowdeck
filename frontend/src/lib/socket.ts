@@ -13,15 +13,15 @@ export const getSocket = (): Socket => {
     });
 
     socket.on('connect', () => {
-      console.log('✅ Socket.io connected:', socket?.id);
+      console.log('Socket.io connected:', socket?.id);
     });
 
     socket.on('disconnect', (reason) => {
-      console.log('❌ Socket.io disconnected:', reason);
+      console.log('Socket.io disconnected:', reason);
     });
 
     socket.on('connect_error', (error) => {
-      console.error('🔴 Socket.io connection error:', error);
+      console.error('Socket.io connection error:', error);
     });
   }
   return socket;
