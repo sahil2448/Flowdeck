@@ -63,7 +63,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/members', memberRoutes);
 
 
-// Error handlers (MUST be last!)
 app.use(notFoundHandler);  // 404 for undefined routes
 app.use(errorHandler);     // Centralized error handling
 

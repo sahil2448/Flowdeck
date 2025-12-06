@@ -64,6 +64,7 @@ export async function createCard(req: Request, res: Response) {
       cardId: card.id,
       listId: list.id,
         tenantId: tenantId,  // ✅ Add this everywhere
+        
 
       metadata: {
         cardTitle: card.title,

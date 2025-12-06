@@ -87,7 +87,7 @@ export default function BoardPage() {
           </div>
         </header>
         <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
-          <KanbanBoard board={board} />
+          <KanbanBoard board={board} boardId={boardId} />
         </div>
 
         <CreateListDialog

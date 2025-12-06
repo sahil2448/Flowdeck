@@ -25,9 +25,9 @@ interface CardDetailModalProps {
   card: any;
   isOpen: boolean;
   onClose: () => void;
-}
+  boardId: string;}
 
-export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps) {
+export function CardDetailModal({ card, isOpen, onClose, boardId }: CardDetailModalProps) {
   const { user } = useAuthStore();
   const { 
     updateCard, 
@@ -38,7 +38,6 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
     deleteCard, 
     comments: allComments 
   } = useBoardStore();
-  
   const [title, setTitle] = useState(card?.title || "");
   const [description, setDescription] = useState(card?.description || "");
   const [comment, setComment] = useState("");
@@ -47,13 +46,43 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
   const [dis, setDis] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
   
-  const boardId = card?.list?.boardId;
   const comments = allComments[card?.id] || [];
 
-  //  useCallback to prevent re-creation
-  const fetchCardMembers = useCallback(async () => {
-    if (!card?.id) return;
+
+
+    useEffect(() => {
+    console.log('Card data:', card);
+    console.log('Card list:', card?.list);
+    console.log('Board ID:', card?.list?.boardId);
+  }, [card]);
+
+  const fetchBoardMembers = useCallback(async ()=>{
+    if(!boardId){
+      console.warn('Missing board ID');
+      return;
+    }
+    try {
+      const res = await memberApi.getBoardMembers(boardId);
+      console.log('Board members:', res.data.members);
+    } catch (error) {
+      console.error('Failed to fetch board members:', error);
+      toast.error('Failed to load board members');}
+  },[
+    boardId
+  ])
+
+  useEffect(()=>{
+      fetchBoardMembers();
     
+  }, [fetchBoardMembers]);
+  
+
+
+  const fetchCardMembers = useCallback(async () => {
+  if (!card?.id || !boardId) {
+      console.warn('Missing card ID or board ID');
+      return;
+    }
     try {
       const res = await memberApi.getCardMembers(card.id);
       setMembers(res.data.members);
@@ -61,7 +90,7 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
       console.error('Failed to fetch members:', error);
       toast.error('Failed to load card members');
     }
-  }, [card?.id]);
+  }, [card?.id,boardId]);
 
   //  modal opens
   useEffect(() => {
@@ -70,7 +99,8 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
     }
   }, [isOpen, card?.id, fetchCardMembers]);
 
-  //  listeners for real-time member updates
+
+
   useEffect(() => {
     if (!isOpen || !card?.id) return;
 

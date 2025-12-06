@@ -18,9 +18,10 @@ interface CardData {
 
 interface KanbanCardProps {
   card: CardData;
+  boardId: string;
 }
 
-export function KanbanCard({ card }: KanbanCardProps) {
+export function KanbanCard({ card, boardId }: KanbanCardProps) {
   const [showDetail, setShowDetail] = useState(false);
   const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
 
@@ -137,6 +138,7 @@ export function KanbanCard({ card }: KanbanCardProps) {
         card={selectedCard}
         isOpen={!!selectedCard}
         onClose={() => setSelectedCard(null)}
+        boardId={boardId}
         onUpdate={(id, data) => console.log("Update", id, data)}
       />
     </>

@@ -12,9 +12,10 @@ import { Board } from "@/store/board";
 
 interface KanbanBoardProps {
   board: Board;
+  boardId: string;
 }
 
-function SortableKanbanList({ list, activeCardId }: { list: any; activeCardId: string | null }) {
+function SortableKanbanList({ list, activeCardId,boardId }: { list: any; activeCardId: string | null }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: list.id, data: { type: "list" } });
 
@@ -31,6 +32,7 @@ function SortableKanbanList({ list, activeCardId }: { list: any; activeCardId: s
     >
       <KanbanList
         list={list}
+        boardId={boardId}
         activeCardId={activeCardId}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
@@ -38,7 +40,7 @@ function SortableKanbanList({ list, activeCardId }: { list: any; activeCardId: s
   );
 }
 
-export function KanbanBoard({ board }: KanbanBoardProps) {
+export function KanbanBoard({ board, boardId }: KanbanBoardProps) {
   const sensors = useSensors(useSensor(PointerSensor));
 
   const moveCard = useBoardStore((s) => s.moveCard);
@@ -114,7 +116,7 @@ export function KanbanBoard({ board }: KanbanBoardProps) {
         <ScrollArea className="w-full">
           <div className="flex gap-4 overflow-x-auto pb-4 min-h-[80vh]">
             {sortedLists.map(list => (
-              <SortableKanbanList key={list.id} list={list} activeCardId={activeCardId} />
+              <SortableKanbanList key={list.id} list={list} activeCardId={activeCardId} boardId={boardId} />
             ))}
           </div>
           <ScrollBar orientation="horizontal" className="mb-4 bg-black" />
@@ -123,7 +125,7 @@ export function KanbanBoard({ board }: KanbanBoardProps) {
       <DragOverlay>
         {activeCard ? (
           <div style={{ width: 320, zIndex: 9999 }}>
-            <KanbanCard card={activeCard} />
+            <KanbanCard boardId={boardId} card={activeCard} />
           </div>
         ) : null}
       </DragOverlay>
