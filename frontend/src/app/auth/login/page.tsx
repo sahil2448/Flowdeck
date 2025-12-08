@@ -63,6 +63,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
+                placeholder="xyz@example.com"
                 className="h-10"
               />
             </div>
@@ -76,6 +77,7 @@ export default function LoginPage() {
                 required
                 autoComplete="current-password"
                 className="h-10"
+                placeholder="Enter your password"
               />
             </div>
             {error && (

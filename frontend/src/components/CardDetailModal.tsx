@@ -422,7 +422,7 @@ const handleTagRemoved = (tagId: string) => {
           <div className="space-y-8 pb-6">
             
             {/* Quick Actions Bar */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {/* Members Section */}
               <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md">
                 <User className="h-4 w-4 text-gray-500" />
@@ -445,10 +445,13 @@ const handleTagRemoved = (tagId: string) => {
                       onTagRemoved={handleTagRemoved}
                     />
                   </div>
+              
+              
               <DueDatePicker
                 cardId={card.id}
                 dueDate={dueDate}
                 onUpdate={handleDueDateUpdate}
+
               />
               <Button variant="outline" size="sm" className="gap-2">
                 <Paperclip className="h-4 w-4" /> Attach

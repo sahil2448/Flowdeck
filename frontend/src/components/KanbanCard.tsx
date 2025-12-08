@@ -31,7 +31,6 @@ export function KanbanCard({ card, boardId }: KanbanCardProps) {
 const [cardTags, setCardTags] = useState<any[]>([]);
 
 
-  // Use ref for pointer tracking
   const pointerDownRef = useRef(false);
   const startXRef = useRef(0);
   const startYRef = useRef(0);
