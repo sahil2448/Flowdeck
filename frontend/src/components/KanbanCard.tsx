@@ -3,17 +3,21 @@ import { useEffect, useRef, useState } from "react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {  Badge, GripVertical } from "lucide-react";
+import {  Badge, Clock, GripVertical } from "lucide-react";
 import {   Tooltip,
   TooltipContent,
   TooltipTrigger, } from "@/components/ui/tooltip";
 import { CardDetailModal } from "./CardDetailModal";
 import {Card as CardType} from "../types/index"
 import { tagApi } from "@/lib/api";
+import { cn } from "@/lib/utils";
+import { format, isPast, isToday } from "date-fns";
+
 interface CardData {
   id: string;
   title: string;
   description: string | null;
+  dueDate:Date|null;
 }
 
 interface KanbanCardProps {
@@ -132,6 +136,25 @@ const [cardTags, setCardTags] = useState<any[]>([]);
         ))}
       </div>
     )}
+
+    {card.dueDate && (
+      <div className="flex items-center gap-1">
+        <div
+          className={cn(
+            "flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium",
+            isPast(new Date(card.dueDate)) && !isToday(new Date(card.dueDate))
+              ? "bg-red-100 text-red-700"
+              : isToday(new Date(card.dueDate))
+              ? "bg-yellow-100 text-yellow-700"
+              : "bg-gray-100 text-gray-700"
+          )}
+        >
+          <Clock className="h-3 w-3" />
+          <span>{format(new Date(card.dueDate), "MMM d")}</span>
+        </div>
+      </div>
+    )}
+    
     <Tooltip>
       <TooltipTrigger asChild>
             <div {...listeners} className="ml-2 p-1 cursor-grab hover:bg-gray-300 transition-all duration-200 h-full" aria-label="Drag card">
@@ -155,6 +178,8 @@ const [cardTags, setCardTags] = useState<any[]>([]);
 
       </Tooltip>
     </div>
+
+    
       
       {/* <CardDetailDialog
         open={showDetail}

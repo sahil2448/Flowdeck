@@ -21,6 +21,7 @@ import { getSocket } from "@/lib/socket";
 import {  memberApi, tagApi } from "@/lib/api";
 import { MemberSelector } from "./MemberSelector";
 import { TagSelector } from "./TagSelector";
+import { DueDatePicker } from "./DueDatePicker";
 
 interface CardDetailModalProps {
   card: any;
@@ -49,11 +50,41 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
   const [members, setMembers] = useState<any[]>([]);
   const [boardId,setBoardId]=useState<string>();
   const [tags, setTags] = useState<any[]>([]);
+  const [dueDate, setDueDate] = useState<Date | null>(card?.dueDate || null);
+
 
   
   const comments = allComments[card?.id] || [];
 
 
+
+  useEffect(() => {
+  if (!isOpen || !card?.id) return;
+
+  const socket = getSocket();
+  
+  const handleCardUpdated = ({ card: updatedCard }: any) => {
+    if (updatedCard.id === card.id) {
+      setDueDate(updatedCard.dueDate || null);
+    }
+  };
+
+  socket.on('cardUpdated', handleCardUpdated);
+
+  return () => {
+    socket.off('cardUpdated', handleCardUpdated);
+  };
+}, [isOpen, card?.id]);
+
+const handleDueDateUpdate = async (newDueDate: Date | null) => {
+  try {
+    await updateCard(card.id, { dueDate: newDueDate });
+    setDueDate(newDueDate);
+    toast.success("Due date updated");
+  } catch (error) {
+    toast.error("Failed to update due date");
+  }
+};
 
 useEffect(() => {
   const fetchBoardId = async () => {
@@ -257,6 +288,7 @@ const handleTagRemoved = (tagId: string) => {
     if (card) {
       setTitle(card.title);
       setDescription(card.description || "");
+      setDueDate(card.dueDate || null);
     }
   }, [card]);
 
@@ -413,9 +445,11 @@ const handleTagRemoved = (tagId: string) => {
                       onTagRemoved={handleTagRemoved}
                     />
                   </div>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Clock className="h-4 w-4" /> Due Date
-              </Button>
+              <DueDatePicker
+                cardId={card.id}
+                dueDate={dueDate}
+                onUpdate={handleDueDateUpdate}
+              />
               <Button variant="outline" size="sm" className="gap-2">
                 <Paperclip className="h-4 w-4" /> Attach
               </Button>

@@ -7,6 +7,7 @@ interface Card {
   description: string | null;
   position: number;
   listId: string;
+  dueDate: Date | null;
 }
 
 interface List {

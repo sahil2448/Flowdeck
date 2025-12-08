@@ -236,7 +236,7 @@ export async function updateCard(req: Request, res: Response) {
       },
       include: {
         list: {
-          select: { boardId: true }, // ✅ Include boardId for socket broadcast
+          select: { boardId: true }, 
         },
       },
     });
