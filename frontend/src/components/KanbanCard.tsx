@@ -138,7 +138,6 @@ export function KanbanCard({ card, boardId }: KanbanCardProps) {
         card={selectedCard}
         isOpen={!!selectedCard}
         onClose={() => setSelectedCard(null)}
-        boardId={boardId}
         onUpdate={(id, data) => console.log("Update", id, data)}
       />
     </>

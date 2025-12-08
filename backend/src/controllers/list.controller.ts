@@ -259,3 +259,45 @@ export async function deleteList(req: Request, res: Response) {
     });
   }
 }
+
+// write the export function for getByID
+export async function getListById(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const tenantId = req.user?.tenantId;
+
+    if (!tenantId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User not authenticated',
+      });
+    }
+
+    // Verify list belongs to tenant's board
+    const list = await prisma.list.findFirst({
+      where: {
+        id,
+        board: {
+          tenantId,
+        },
+      },
+    });
+
+    if (!list) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'List not found',
+      });
+    }
+
+    res.status(200).json({
+      list,
+    });
+  } catch (error) {
+    console.error('Get list by ID error:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to fetch list',
+    });
+  }
+}

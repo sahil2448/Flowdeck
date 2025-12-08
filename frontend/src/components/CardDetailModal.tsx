@@ -18,16 +18,17 @@ import { useAuthStore } from "@/store/auth";
 import { useBoardStore } from "@/store/board";
 import { toast } from "sonner";
 import { getSocket } from "@/lib/socket";
-import { memberApi } from "@/lib/api";
+import { listApi, memberApi } from "@/lib/api";
 import { MemberSelector } from "./MemberSelector";
 
 interface CardDetailModalProps {
   card: any;
   isOpen: boolean;
   onClose: () => void;
-  boardId: string;}
+  boardId: string;
+}
 
-export function CardDetailModal({ card, isOpen, onClose, boardId }: CardDetailModalProps) {
+export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps) {
   const { user } = useAuthStore();
   const { 
     updateCard, 
@@ -45,16 +46,29 @@ export function CardDetailModal({ card, isOpen, onClose, boardId }: CardDetailMo
   const [loading, setLoading] = useState(false);
   const [dis, setDis] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
+  const [boardId,setBoardId]=useState<string>();
   
   const comments = allComments[card?.id] || [];
 
+useEffect(() => {
+  const fetchBoardId = async () => {
+    if (!card?.listId) return;
 
+    const listId = card.listId;
 
-    useEffect(() => {
-    console.log('Card data:', card);
-    console.log('Card list:', card?.list);
-    console.log('Board ID:', card?.list?.boardId);
-  }, [card]);
+    try {
+      const list = await useBoardStore.getState().getListsById(listId); 
+      setBoardId(list?.boardId);
+      console.log("Fetched list:", list);
+      console.log("Board ID:", boardId);
+
+    } catch (err) {
+      console.error("Error fetching list:", err);
+    }
+  };
+
+  fetchBoardId();
+}, [card]);
 
   const fetchBoardMembers = useCallback(async ()=>{
     if(!boardId){
@@ -266,7 +280,7 @@ export function CardDetailModal({ card, isOpen, onClose, boardId }: CardDetailMo
                     setTitle(e.target.value);
                     setDis(false);
                   }}
-                  className="text-xl font-bold flex-1 border-slate-900 rounded-sm shadow-none px-2 h-auto focus-visible:ring-0 focus-visible:border-b-2 focus-visible:border-blue-500 transition-all" 
+                  className="text-xl font-bold flex-1 border-slate-900 max-w-fit text-center rounded-sm shadow-none px-2 h-auto focus-visible:ring-0 focus-visible:border-b-2 focus-visible:border-blue-500 transition-all" 
                   placeholder="Enter card title"
                 />
 

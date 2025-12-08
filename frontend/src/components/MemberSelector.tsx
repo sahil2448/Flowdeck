@@ -50,6 +50,7 @@ export function MemberSelector({
     try {
       setLoading(true);
       const res = await memberApi.getBoardMembers(boardId);
+      console.log("Fetched board members:", res.data);
       setBoardMembers(res.data.members);
     } catch (error) {
       toast.error("Failed to load members");
@@ -61,6 +62,7 @@ export function MemberSelector({
   const handleAddMember = async (userId: string) => {
     try {
       const res = await memberApi.addMember(cardId, userId);
+      console.log("Member added:", res.data);
       onMemberAdded(res.data.member);
       toast.success("Member added");
     } catch (error: any) {

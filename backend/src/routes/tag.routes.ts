@@ -1,30 +1,28 @@
 import { Router } from 'express';
 import {
+  getBoardTags,
   createTag,
-  getTags,
   updateTag,
   deleteTag,
-  assignTagToCard,
-  removeTagFromCard,
   getCardTags,
+  addTagToCard,
+  removeTagFromCard,
 } from '../controllers/tag.controller';
 import { authenticate } from '../middleware/auth';
-import { validate } from '../middleware/validate';
-import { assignTagSchema, createTagSchema } from '../validators/tag.validator';
 
 const router = Router();
 
 router.use(authenticate);
 
-// Tag CRUD
-router.post('/', validate(createTagSchema), createTag); // ✅ Add validation
-router.get('/board/:boardId', getTags);
+// Board tag routes
+router.get('/board/:boardId', getBoardTags);
+router.post('/', createTag);
 router.patch('/:id', updateTag);
 router.delete('/:id', deleteTag);
 
-// Tag-Card Assignment
-router.post('/assign', validate(assignTagSchema), assignTagToCard); // ✅ Add validation
-router.post('/unassign', validate(assignTagSchema), removeTagFromCard); // ✅ Add validation
+// Card tag routes
 router.get('/card/:cardId', getCardTags);
+router.post('/card/:cardId', addTagToCard);
+router.delete('/card/:cardId/tag/:tagId', removeTagFromCard);
 
 export default router;

@@ -4,6 +4,7 @@ import {
   getLists,
   updateList,
   deleteList,
+  getListById
 } from '../controllers/list.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -14,6 +15,7 @@ const router = Router();
 
 router.use(authenticate);
 
+router.get('/:id', getListById);
 router.post('/', validate(createListSchema), createList);
 router.get('/board/:boardId', getLists);
 router.patch('/:id', validate(updateListSchema), updateList);

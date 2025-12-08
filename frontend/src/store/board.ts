@@ -49,7 +49,9 @@ interface BoardState {
   deleteCard: (cardId: string) => Promise<void>;
   renameList: (listId: string, newTitle: string) => Promise<void>;
   deleteList: (listId: string) => Promise<void>;
+  getListsById: (listId: string) => Promise<List | null>;
   moveList: (listId: string, targetIndex: number) => Promise<void>;
+  getAllLists: (boardId: string) => Promise<List[]>;
   
   fetchComments: (cardId: string) => Promise<void>;
   addComment: (cardId: string, comment: Comment) => void;
@@ -64,6 +66,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   loading: false,
   error: null,
   comments: {},
+
 
   reset: () => {
     set({ board: null, loading: false, error: null, comments: {} });
@@ -128,6 +131,21 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       }
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to create card');
+    }
+  },
+  getListsById: async (listId: string) => {
+    const board = get().board;
+    if (board) {
+      return board.lists.find(list => list.id === listId) || null;
+    }
+    return null;
+  },
+  getAllLists: async (boardId: string) => {
+    try {
+      const res = await api.get(`/api/lists/board/${boardId}`);
+      return res.data.lists;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to fetch lists');
     }
   },
 

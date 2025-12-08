@@ -153,6 +153,9 @@ export const boardApi = {
 };
 
 export const listApi = {
+  getAll: (boardId: string) => api.get(`/api/lists/board/${boardId}`),
+  getListsById: (id: string) => api.get(`/api/lists/${id}`),
+
   create: (data: { boardId: string; title: string }) =>
     api.post("/api/lists", data),
   update: (id: string, data: Partial<{ title: string; position: number }>) =>
@@ -195,20 +198,37 @@ export const authApi = {
 };
 
 export const memberApi = {
-  // Get all board members (for dropdown)
   getBoardMembers: (boardId: string) => api.get(`/api/members/board/${boardId}`),
   
-  // Get card members
   getCardMembers: (cardId: string) => api.get(`/api/members/card/${cardId}`),
   
-  // Add member to card
   addMember: (cardId: string, userId: string) =>
     api.post(`/api/members/card/${cardId}`, { userId }),
   
-  // Remove member from card
   removeMember: (cardId: string, userId: string) =>
     api.delete(`/api/members/card/${cardId}/user/${userId}`),
 };
+
+export const tagApi = {
+  getBoardTags: (boardId: string) => api.get(`/api/tags/board/${boardId}`),
+  
+  create: (data: { boardId: string; name: string; color: string }) =>
+    api.post('/api/tags', data),
+  
+  update: (tagId: string, data: { name?: string; color?: string }) =>
+    api.patch(`/api/tags/${tagId}`, data),
+  
+  delete: (tagId: string) => api.delete(`/api/tags/${tagId}`),
+  
+  getCardTags: (cardId: string) => api.get(`/api/tags/card/${cardId}`),
+  
+  addToCard: (cardId: string, tagId: string) =>
+    api.post(`/api/tags/card/${cardId}`, { tagId }),
+  
+  removeFromCard: (cardId: string, tagId: string) =>
+    api.delete(`/api/tags/card/${cardId}/tag/${tagId}`),
+};
+
 
 
 export default api;
