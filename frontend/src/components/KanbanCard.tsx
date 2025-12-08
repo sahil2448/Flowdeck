@@ -3,13 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {  Badge, Clock, GripVertical } from "lucide-react";
+import {  Badge, Clock, GripVertical, Paperclip } from "lucide-react";
 import {   Tooltip,
   TooltipContent,
   TooltipTrigger, } from "@/components/ui/tooltip";
 import { CardDetailModal } from "./CardDetailModal";
 import {Card as CardType} from "../types/index"
-import { tagApi } from "@/lib/api";
+import { attachmentApi, tagApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { format, isPast, isToday } from "date-fns";
 
@@ -29,6 +29,20 @@ export function KanbanCard({ card, boardId }: KanbanCardProps) {
   const [showDetail, setShowDetail] = useState(false);
   const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
 const [cardTags, setCardTags] = useState<any[]>([]);
+const [attachmentCount, setAttachmentCount] = useState(0);
+
+
+useEffect(() => {
+  const fetchAttachments = async () => {
+    try {
+      const res = await attachmentApi.getCardAttachments(card.id);
+      setAttachmentCount(res.data.attachments.length);
+    } catch (error) {
+      console.error('Failed to fetch attachments');
+    }
+  };
+  fetchAttachments();
+}, [card.id]);
 
 
   const pointerDownRef = useRef(false);
@@ -154,6 +168,12 @@ const [cardTags, setCardTags] = useState<any[]>([]);
       </div>
     )}
     
+    {attachmentCount > 0 && (
+  <div className="flex items-center gap-1 text-xs text-gray-500">
+    <Paperclip className="h-3 w-3" />
+    <span>{attachmentCount}</span>
+  </div>
+)}
     <Tooltip>
       <TooltipTrigger asChild>
             <div {...listeners} className="ml-2 p-1 cursor-grab hover:bg-gray-300 transition-all duration-200 h-full" aria-label="Drag card">

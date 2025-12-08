@@ -230,5 +230,24 @@ export const tagApi = {
 };
 
 
+export const attachmentApi = {
+  upload: (cardId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/api/attachments/card/${cardId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  getCardAttachments: (cardId: string) =>
+    api.get(`/api/attachments/card/${cardId}`),
+
+  delete: (attachmentId: string) =>
+    api.delete(`/api/attachments/${attachmentId}`),
+};
+
+
 
 export default api;

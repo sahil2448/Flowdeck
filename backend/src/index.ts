@@ -15,6 +15,8 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger'; 
 import logger from './config/logger';
 import { initializeSocketHandlers } from '../src/socket/socketHandler';
+import path from 'path';
+import attachmentRoutes from './routes/attachment.routes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -61,6 +63,9 @@ app.use("/api/tags", tagRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/members', memberRoutes);
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/api/attachments', attachmentRoutes);
+
 
 
 app.use(notFoundHandler);  // 404 for undefined routes
