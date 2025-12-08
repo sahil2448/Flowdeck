@@ -1,15 +1,15 @@
 'use client'
-import { useRef, useState } from "react";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CardDetailDialog } from "./CardDetailDialog";
+import { useEffect, useRef, useState } from "react";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripHorizontal, GripVertical } from "lucide-react";
+import {  Badge, GripVertical } from "lucide-react";
 import {   Tooltip,
   TooltipContent,
   TooltipTrigger, } from "@/components/ui/tooltip";
 import { CardDetailModal } from "./CardDetailModal";
 import {Card as CardType} from "../types/index"
+import { tagApi } from "@/lib/api";
 interface CardData {
   id: string;
   title: string;
@@ -24,6 +24,7 @@ interface KanbanCardProps {
 export function KanbanCard({ card, boardId }: KanbanCardProps) {
   const [showDetail, setShowDetail] = useState(false);
   const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
+const [cardTags, setCardTags] = useState<any[]>([]);
 
 
   // Use ref for pointer tracking
@@ -78,6 +79,19 @@ export function KanbanCard({ card, boardId }: KanbanCardProps) {
       pointerDownRef.current = false;
     }
   }
+  useEffect(() => {
+  // Fetch tags for this card
+  const fetchTags = async () => {
+    try {
+      const res = await tagApi.getCardTags(card.id);
+      setCardTags(res.data.tags);
+    } catch (error) {
+      console.error('Failed to fetch card tags');
+    }
+  };
+  fetchTags();
+}, [card.id]);
+
 
   return (
     <>
@@ -104,8 +118,21 @@ export function KanbanCard({ card, boardId }: KanbanCardProps) {
             </CardDescription>
           )} */}
           </div>
-          
-                        <Tooltip>
+
+              {cardTags.length > 0 && (
+      <div className="flex flex-wrap gap-1">
+        {cardTags.map(tag => (
+          <Badge
+            key={tag.id}
+            style={{ backgroundColor: tag.color }}
+            className="text-white px-2 py-0.5 text-xs"
+          >
+            {tag.name}
+          </Badge>
+        ))}
+      </div>
+    )}
+    <Tooltip>
       <TooltipTrigger asChild>
             <div {...listeners} className="ml-2 p-1 cursor-grab hover:bg-gray-300 transition-all duration-200 h-full" aria-label="Drag card">
               <GripVertical className="w- h-6 p-0" />

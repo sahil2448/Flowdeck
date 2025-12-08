@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { 
   AlignLeft, Clock, MessageSquare, Paperclip, Tag, 
-  Trash2, User, X, Send, Check, TrashIcon
+   User, X, Send, Check, TrashIcon
 } from "lucide-react";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { format } from "date-fns";
@@ -18,8 +18,9 @@ import { useAuthStore } from "@/store/auth";
 import { useBoardStore } from "@/store/board";
 import { toast } from "sonner";
 import { getSocket } from "@/lib/socket";
-import { listApi, memberApi } from "@/lib/api";
+import {  memberApi, tagApi } from "@/lib/api";
 import { MemberSelector } from "./MemberSelector";
+import { TagSelector } from "./TagSelector";
 
 interface CardDetailModalProps {
   card: any;
@@ -47,8 +48,12 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
   const [dis, setDis] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
   const [boardId,setBoardId]=useState<string>();
+  const [tags, setTags] = useState<any[]>([]);
+
   
   const comments = allComments[card?.id] || [];
+
+
 
 useEffect(() => {
   const fetchBoardId = async () => {
@@ -144,6 +149,72 @@ useEffect(() => {
       socket.off('memberRemoved', handleMemberRemoved);
     };
   }, [isOpen, card?.id]);
+
+
+
+  
+  const fetchCardTags = useCallback(async () => {
+  if (!card?.id || !boardId) return;
+  
+  try {
+    const res = await tagApi.getCardTags(card.id);
+    setTags(res.data.tags);
+  } catch (error) {
+    console.error('Failed to fetch tags:', error);
+  }
+}, [card?.id, boardId]);
+
+useEffect(() => {
+  if (isOpen && card?.id) {
+    fetchCardMembers();
+    fetchCardTags(); // ✅ Add this
+  }
+}, [isOpen, card?.id, fetchCardMembers, fetchCardTags]);
+
+
+// Socket listeners for tags
+useEffect(() => {
+  if (!isOpen || !card?.id) return;
+
+  const socket = getSocket();
+  
+  const handleTagAdded = ({ cardId, tag }: any) => {
+    if (cardId === card.id) {
+      setTags(prev => {
+        if (prev.some(t => t.id === tag.id)) return prev;
+        return [...prev, tag];
+      });
+    }
+  };
+
+  const handleTagRemoved = ({ cardId, tagId }: any) => {
+    if (cardId === card.id) {
+      setTags(prev => prev.filter(t => t.id !== tagId));
+    }
+  };
+
+  socket.on('tagAddedToCard', handleTagAdded);
+  socket.on('tagRemovedFromCard', handleTagRemoved);
+
+  return () => {
+    socket.off('tagAddedToCard', handleTagAdded);
+    socket.off('tagRemovedFromCard', handleTagRemoved);
+  };
+}, [isOpen, card?.id]);
+
+// Handlers
+const handleTagAdded = (tag: any) => {
+  setTags(prev => {
+    if (prev.some(t => t.id === tag.id)) return prev;
+    return [...prev, tag];
+  });
+};
+
+const handleTagRemoved = (tagId: string) => {
+  setTags(prev => prev.filter(t => t.id !== tagId));
+};
+
+
 
   useEffect(() => {
     if (!isOpen || !card?.id) return;
@@ -332,9 +403,16 @@ useEffect(() => {
                 />
               </div>
 
-              <Button variant="outline" size="sm" className="gap-2">
-                <Tag className="h-4 w-4" /> Labels
-              </Button>
+              <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md">
+                   <Tag className="h-4 w-4 text-gray-500" />
+                    <TagSelector
+                      cardId={card.id}
+                      boardId={boardId}
+                      assignedTags={tags}
+                      onTagAdded={handleTagAdded}
+                      onTagRemoved={handleTagRemoved}
+                    />
+                  </div>
               <Button variant="outline" size="sm" className="gap-2">
                 <Clock className="h-4 w-4" /> Due Date
               </Button>

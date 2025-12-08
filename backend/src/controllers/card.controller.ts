@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { logActivity, ActivityType } from '../services/activity.service'; // Add import
-
+import {Server} from 'socket.io'
 // Create a new card in a list
 export async function createCard(req: Request, res: Response) {
   try {
@@ -213,7 +213,7 @@ export async function getCard(req: Request, res: Response) {
 export async function updateCard(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const { title, description, listId, position } = req.body;
+    const { title, description, listId, position, dueDate } = req.body; // ✅ Add dueDate
     const tenantId = req.user?.tenantId;
     const userId = req.user?.userId;
 
@@ -234,6 +234,11 @@ export async function updateCard(req: Request, res: Response) {
           },
         },
       },
+      include: {
+        list: {
+          select: { boardId: true }, // ✅ Include boardId for socket broadcast
+        },
+      },
     });
 
     if (!existingCard) {
@@ -243,7 +248,6 @@ export async function updateCard(req: Request, res: Response) {
       });
     }
 
-    // If moving to different list, verify new list exists
     if (listId && listId !== existingCard.listId) {
       const newList = await prisma.list.findFirst({
         where: {
@@ -262,17 +266,23 @@ export async function updateCard(req: Request, res: Response) {
       }
     }
 
+    const updateData: any = {
+      title: title || existingCard.title,
+      description: description !== undefined ? description : existingCard.description,
+      listId: listId || existingCard.listId,
+      position: position !== undefined ? position : existingCard.position,
+    };
+
+    if (dueDate !== undefined) {
+      updateData.dueDate = dueDate ? new Date(dueDate) : null;
+    }
+
     const card = await prisma.card.update({
       where: { id },
-      data: {
-        title: title || existingCard.title,
-        description: description !== undefined ? description : existingCard.description,
-        listId: listId || existingCard.listId,
-        position: position !== undefined ? position : existingCard.position,
-      },
+      data: updateData,
     });
 
-        if (listId && listId !== existingCard.listId) {
+    if (listId && listId !== existingCard.listId) {
       const oldList = await prisma.list.findUnique({
         where: { id: existingCard.listId },
       });
@@ -286,16 +296,14 @@ export async function updateCard(req: Request, res: Response) {
         boardId: newList!.boardId,
         cardId: card.id,
         listId: listId,
-          tenantId: tenantId,  // ✅ Add this everywhere
-
+        tenantId: tenantId,
         metadata: {
           cardTitle: card.title,
           fromList: oldList?.title,
           toList: newList?.title,
         },
       });
-    } else if (title || description !== undefined) {
-      // Card was updated but not moved
+    } else if (title || description !== undefined || dueDate !== undefined) {
       const list = await prisma.list.findUnique({
         where: { id: existingCard.listId },
       });
@@ -306,14 +314,18 @@ export async function updateCard(req: Request, res: Response) {
         boardId: list!.boardId,
         cardId: card.id,
         listId: existingCard.listId,
-          tenantId: tenantId,  // ✅ Add this everywhere
-
+        tenantId: tenantId,
         metadata: {
           cardTitle: card.title,
-          changes: { title, description },
+          changes: { title, description, dueDate }, // ✅ Include dueDate in changes
         },
       });
     }
+
+    const io:Server = req.app.get('io');
+    io.to(`card:${id}`).emit('cardUpdated', { card });
+    
+    io.to(`board:${existingCard.list.boardId}`).emit('cardUpdated', { card });
 
     res.status(200).json({
       message: 'Card updated successfully',
@@ -327,6 +339,7 @@ export async function updateCard(req: Request, res: Response) {
     });
   }
 }
+
 
 // Delete card
 export async function deleteCard(req: Request, res: Response) {
