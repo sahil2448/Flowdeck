@@ -21,10 +21,8 @@ import attachmentRoutes from './routes/attachment.routes';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Create HTTP server
 const httpServer = http.createServer(app);
 
-// Socket.io setup
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
@@ -33,18 +31,15 @@ const io = new Server(httpServer, {
   },
 });
 
-// Middleware
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true,
 }));
 app.use(express.json());
-app.use(requestLogger); // Request logging
+app.use(requestLogger);
 
-// Make io accessible in routes
 app.set('io', io);
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -58,7 +53,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/boards', boardRoutes);
 app.use('/api/lists', listRoutes); 
 app.use('/api/cards', cardRoutes); 
-app.use('/api/comments', commentRoutes); // Changed from /api/cards to /api/comments
+app.use('/api/comments', commentRoutes);
 app.use("/api/tags", tagRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/users', userRoutes);
@@ -68,10 +63,9 @@ app.use('/api/attachments', attachmentRoutes);
 
 
 
-app.use(notFoundHandler);  // 404 for undefined routes
-app.use(errorHandler);     // Centralized error handling
+app.use(notFoundHandler); 
+app.use(errorHandler);  
 
-// Initialize Socket.io handlers
 initializeSocketHandlers(io);
 
 httpServer.listen(PORT, () => {

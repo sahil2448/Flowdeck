@@ -15,7 +15,7 @@ interface BoardsState {
   fetchBoards: () => Promise<void>;
   createBoard: (title: string, description?: string) => Promise<Board>;
   deleteBoard: (id: string) => Promise<void>;
-  renameBoard: (id: string, title: string) => Promise<void>; // ✅ Added
+  renameBoard: (id: string, title: string) => Promise<void>;
 }
 
 export const useBoardsStore = create<BoardsState>((set, get) => ({

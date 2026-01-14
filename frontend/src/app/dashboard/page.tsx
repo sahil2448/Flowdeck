@@ -12,7 +12,7 @@ import AppLayout from "@/components/AppLayout";
 import { BoardSearch } from "@/components/BoardSearch";
 import { MobileSidebar } from "@/components/MobileSidebar";
 import { UserNav } from "@/components/UserNav";
-import { MobileSearch } from "@/components/MobileSearch"; // ✅ NEW
+import { MobileSearch } from "@/components/MobileSearch"; 
 
 export default function DashboardPage() {
   useAuthRedirect();
@@ -33,9 +33,7 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      {/* Header */}
       <header className="h-16 bg-white border-b px-4 sm:px-6 flex items-center justify-between shrink-0 gap-4">
-        {/* Left: Mobile Menu & Title */}
         <div className="flex items-center gap-3 flex-1">
           <div className="sm:hidden">
             <MobileSidebar />
@@ -105,7 +103,7 @@ export default function DashboardPage() {
               {boards.map((board) => (
                 <Card
                   key={board.id}
-                  className="cursor-pointer hover:shadow-lg transition-all duration-200 border-gray-200 hover:border-blue-300 group"
+                  className="cursor-pointer rounded-sm hover:shadow-lg transition-all duration-200 border-gray-200 hover:border-blue-300 group"
                   onClick={() => router.push(`/boards/${board.id}`)}
                 >
                   <CardHeader>

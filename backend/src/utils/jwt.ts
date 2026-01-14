@@ -18,7 +18,7 @@ const JWT_REFRESH_SECRET: string = process.env.JWT_REFRESH_SECRET;
  * Use the library's SignOptions['expiresIn'] type to avoid typing friction.
  */
 const JWT_EXPIRES_IN: jwt.SignOptions['expiresIn'] =
-  (process.env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn']) ?? '15m';
+  (process.env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn']) ?? '120m';
 
 const JWT_REFRESH_EXPIRES_IN: jwt.SignOptions['expiresIn'] =
   (process.env.JWT_REFRESH_EXPIRES_IN as jwt.SignOptions['expiresIn']) ?? '7d';

@@ -10,8 +10,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { RenameListDialog } from "./RenameListDialog";
 import { DeleteListDialog } from "./DeleteListDialog";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./ui/tooltip";
-import { CardDetailModal } from "./CardDetailModal";
-import {Card as CardType} from "../types/index"
+import { VscEmptyWindow } from "react-icons/vsc";
 
 interface CardData {
   id: string;
@@ -58,7 +57,6 @@ export function KanbanList({ list, activeCardId, dragHandleProps }: KanbanListPr
     <>
       <div ref={setNodeRef} className="flex-shrink-0 w-80">
         <Card className="p-4">
-          {/* Header with drag handle and actions */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
  <Tooltip>
@@ -91,7 +89,7 @@ export function KanbanList({ list, activeCardId, dragHandleProps }: KanbanListPr
          <Button
                 size="icon"
                 variant="ghost"
-                className="p-1"
+                className="p-1 cursor-pointer"
                 onClick={() => setMenuOpen(v => !v)}
                 aria-label="More options"
               >
@@ -112,7 +110,7 @@ export function KanbanList({ list, activeCardId, dragHandleProps }: KanbanListPr
                 >
                   <Button
                     variant="ghost"
-                    className="w-full mb-1 justify-start"
+                    className="w-full mb-1 justify-start cursor-pointer"
                     onClick={() => {
                       setShowRename(true);
                       setMenuOpen(false);
@@ -122,7 +120,7 @@ export function KanbanList({ list, activeCardId, dragHandleProps }: KanbanListPr
                   </Button>
                   <Button
                     variant="destructive"
-                    className="w-full justify-start text-red-600 gap-2 text-white"
+                    className="w-full justify-start text-red-600 gap-2 text-white cursor-pointer"
                     onClick={() => {
                       setShowDelete(true);
                       setMenuOpen(false);
@@ -141,8 +139,7 @@ export function KanbanList({ list, activeCardId, dragHandleProps }: KanbanListPr
           >
             <div className="space-y-3 min-h-[40px]">
               {cards.length === 0
-                ? (isOver && activeCardId &&
-                  <div
+                ? (isOver && activeCardId ?(<div
                     className="rounded-md bg-blue-100 border-2 border-blue-400 my-2 flex items-center justify-center"
                     style={{
                       height: 48,
@@ -151,7 +148,17 @@ export function KanbanList({ list, activeCardId, dragHandleProps }: KanbanListPr
                     }}
                   >
                     <span className="text-blue-500 text-sm font-medium">Drop here</span>
-                  </div>
+                  </div>):(
+                    <div className="flex flex-col justify-center items-center gap-2 text-gray-500">
+                      <div className="text-sm text-gray-500 italic text-center flex items-center justify-center">No cards yet. Add a card to get started!
+                      </div>
+                      <div>
+                      <VscEmptyWindow className="w-6 h-6 mr-2" />
+                    </div>
+                  </div>)
+                  
+
+                  
                 )
                 : cards.map((card, idx) => (
                     <div key={card.id}>
@@ -175,7 +182,7 @@ export function KanbanList({ list, activeCardId, dragHandleProps }: KanbanListPr
           </SortableContext>
           <Button
             variant="ghost"
-            className="w-full justify-start mt-3"
+            className="w-full justify-start mt-3 cursor-pointer"
             onClick={() => setShowCreateCard(true)}
           >
             <PlusIcon className="w-4 h-4 mr-2" />

@@ -17,7 +17,7 @@ export const useSidebar = create<SidebarStore>()(
       toggle: () => set((state) => ({ isOpen: !state.isOpen })),
     }),
     {
-      name: "sidebar-storage", // unique name for localStorage
+      name: "sidebar-storage", 
     }
   )
 );
