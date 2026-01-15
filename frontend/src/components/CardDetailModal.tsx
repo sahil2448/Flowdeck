@@ -293,6 +293,10 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
     fetchComments(card.id);
 
     const handleNewComment = (newComment: any) => {
+      if (newComment.userId === user?.id) {
+        return;
+      }
+
       if (newComment.cardId === card.id) {
         addComment(card.id, newComment);
       }
@@ -610,7 +614,6 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
             </form>
           </div>
 
-          {/* Comments List */}
           <div className="space-y-4">
             {comments.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">

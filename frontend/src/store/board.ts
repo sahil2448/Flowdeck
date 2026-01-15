@@ -327,14 +327,22 @@ fetchComments: async (cardId: string) => {
   }
 },
 
-addComment: (cardId: string, comment: Comment) => {
-  set((state) => ({
-    comments: {
-      ...state.comments,
-      [cardId]: [comment, ...(state.comments[cardId] || [])],
-    },
-  }));
+addComment: async(cardId:string,comment:Comment)=>{
+  set((state)=>{
+    const existingComments = state.comments[cardId] || [];
+
+    if(existingComments.some((cmt)=>cmt.id === comment.id)){
+      return state;
+    }
+    return {
+        comments: {
+        ...state.comments,
+        [cardId]: [comment, ...existingComments],
+      },
+    }
+  })
 },
+
 
 addCommentOptimistic: async (cardId: string, text: string) => {
   const tempId = `temp-${Date.now()}`;
