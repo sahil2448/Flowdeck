@@ -165,7 +165,7 @@ export function KanbanList({ list, activeCardId, dragHandleProps }: KanbanListPr
                       <KanbanCard card={card} />
                       {idx === cards.length - 1 && isOver && activeCardId && (
                         <div
-                          className="rounded-md bg-blue-100 border-2 border-blue-400 my-2 flex items-center justify-center"
+                          className="rounded-md bg-blue-100 border-2 border-blue-400 flex items-center justify-center"
                           style={{
                             height: 48,
                             opacity: 0.75,

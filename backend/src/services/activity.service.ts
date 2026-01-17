@@ -35,7 +35,7 @@ export async function logActivity(params: LogActivityParams) {
       data: {
         type: params.type,
         userId: params.userId,
-        tenantId: params.tenantId,  // ✅ Add this
+        tenantId: params.tenantId,
         boardId: params.boardId,
         cardId: params.cardId || null,
         listId: params.listId || null,

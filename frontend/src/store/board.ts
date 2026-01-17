@@ -58,7 +58,7 @@ interface BoardState {
   addComment: (cardId: string, comment: Comment) => void;
   addCommentOptimistic: (cardId: string, text: string) => Promise<void>;
   deleteComment: (cardId: string, commentId: string) => Promise<void>;
-    updateComment: (cardId: string, commentId: string, content: string) => Promise<void>;
+  updateComment: (cardId: string, commentId: string, content: string) => Promise<void>;
   updateCommentLocal: (cardId: string, commentId: string, updates: Partial<Comment>) => void;
 }
 
@@ -327,20 +327,55 @@ fetchComments: async (cardId: string) => {
   }
 },
 
-addComment: async(cardId:string,comment:Comment)=>{
-  set((state)=>{
+// addComment: async(cardId:string,comment:Comment)=>{
+//   set((state)=>{
+//     const existingComments = state.comments[cardId] || [];
+
+//     if(existingComments.some((cmt)=>cmt.id === comment.id)){
+//       return state;
+//     }
+//     return {
+//         comments: {
+//         ...state.comments,
+//         [cardId]: [comment, ...existingComments],
+//       },
+//     }
+//   })
+// },
+
+addComment: (cardId: string, comment: Comment) => {
+  set((state) => {
     const existingComments = state.comments[cardId] || [];
 
-    if(existingComments.some((cmt)=>cmt.id === comment.id)){
+    if (existingComments.some((c) => c.id === comment.id)) {
       return state;
     }
-    return {
+
+    const tempMatchIndex = existingComments.findIndex(
+      (c) => 
+        c.id.toString().startsWith('temp-') &&
+        c.text === comment.text &&  
+        (c.userId === comment.userId || c.userId === 'current-user')
+    );
+
+    if (tempMatchIndex !== -1) {
+      const newComments = [...existingComments];
+      newComments[tempMatchIndex] = comment;
+      return {
         comments: {
+          ...state.comments,
+          [cardId]: newComments,
+        },
+      };
+    }
+
+    return {
+      comments: {
         ...state.comments,
         [cardId]: [comment, ...existingComments],
       },
-    }
-  })
+    };
+  });
 },
 
 

@@ -3,7 +3,6 @@ import prisma from '../lib/prisma';
 import { logActivity, ActivityType } from '../services/activity.service';
 import { TypedServer } from '../types/socket';
 
-// Add comment to a card
 export async function createComment(req: Request, res: Response) {
   try {
     const { content, cardId } = req.body;
@@ -24,7 +23,6 @@ export async function createComment(req: Request, res: Response) {
       });
     }
 
-    // Verify card belongs to tenant's board
     const card = await prisma.card.findFirst({
       where: {
         id: cardId,
@@ -60,7 +58,6 @@ export async function createComment(req: Request, res: Response) {
       },
     });
 
-    // Get board ID for activity log
     const cardWithBoard = await prisma.card.findUnique({
       where: { id: cardId },
       include: {
@@ -83,7 +80,6 @@ export async function createComment(req: Request, res: Response) {
       },
     });
 
-    // ✅ Broadcast to all users in the card room via Socket.io
     const io: TypedServer = req.app.get('io');
     const formattedComment = {
       id: comment.id,
@@ -111,7 +107,6 @@ export async function createComment(req: Request, res: Response) {
   }
 }
 
-// Get all comments for a card
 export async function getComments(req: Request, res: Response) {
   try {
     const { cardId } = req.params;
@@ -124,7 +119,6 @@ export async function getComments(req: Request, res: Response) {
       });
     }
 
-    // Verify card belongs to tenant's board
     const card = await prisma.card.findFirst({
       where: {
         id: cardId,
@@ -171,7 +165,6 @@ export async function getComments(req: Request, res: Response) {
   }
 }
 
-// Update comment
 export async function updateComment(req: Request, res: Response) {
   try {
     const { id } = req.params;
@@ -193,7 +186,6 @@ export async function updateComment(req: Request, res: Response) {
       });
     }
 
-    // Verify comment belongs to user and tenant
     const existingComment = await prisma.comment.findFirst({
       where: {
         id,
@@ -232,7 +224,6 @@ export async function updateComment(req: Request, res: Response) {
       },
     });
 
-    // ✅ Broadcast update to all users in the card room
     const io: TypedServer = req.app.get('io');
     const formattedComment = {
       id: comment.id,
@@ -274,7 +265,6 @@ export async function deleteComment(req: Request, res: Response) {
       });
     }
 
-    // Verify comment belongs to user and tenant
     const existingComment = await prisma.comment.findFirst({
       where: {
         id,

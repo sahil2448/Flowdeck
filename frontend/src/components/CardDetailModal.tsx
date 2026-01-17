@@ -360,7 +360,7 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
   const handleSendComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!comment.trim()) return;
-    
+
     try {
       await addCommentOptimistic(card.id, comment);
       setComment("");
@@ -492,7 +492,6 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
             dueDate={dueDate}
             onUpdate={handleDueDateUpdate}
           />
-          
           <div className="ml-auto">
             <Button
               type="button"
@@ -510,7 +509,6 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
 
         <Separator />
 
-        {/* Description Section */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -535,7 +533,8 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
                 onChange={setDescription} 
               />
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleDescriptionSave}>
+                <Button size="sm"   disabled={description === ""}
+ onClick={handleDescriptionSave}>
                   Save
                 </Button>
                 <Button 
