@@ -15,6 +15,7 @@ interface KanbanBoardProps {
   boardId: string;
 }
 
+
 function SortableKanbanList({ list, activeCardId,boardId }: { list: any; activeCardId: string | null }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: list.id, data: { type: "list" } });

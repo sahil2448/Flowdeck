@@ -23,7 +23,7 @@ import { MemberSelector } from "./MemberSelector";
 import { TagSelector } from "./TagSelector";
 import { DueDatePicker } from "./DueDatePicker";
 import { AttachmentUploader } from "./attachmentUploader";
-
+import {CommentDeleteDialog} from "./CommentDeleteDialog"
 interface CardDetailModalProps {
   card: any;
   isOpen: boolean;
@@ -53,6 +53,7 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
   const [tags, setTags] = useState<any[]>([]);
   const [dueDate, setDueDate] = useState<Date | null>(card?.dueDate || null);
   const [attachments, setAttachments] = useState<any[]>([]);
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
 
   const comments = allComments[card?.id] || [];
 
@@ -370,13 +371,7 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    if (confirm("Delete this comment?")) {
-      try {
-        await deleteComment(card.id, commentId);
-      } catch (error) {
-        toast.error("Failed to delete comment");
-      }
-    }
+    setCommentDialogOpen(true);
   };
 
   const handleDeleteCard = async () => {
@@ -647,6 +642,13 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
                       </button>
                     </div>
                   </div>
+
+                  <CommentDeleteDialog 
+                    open={commentDialogOpen}
+                    cardId={card.id}
+                    commentId={c.id}
+                    onOpenChange={setCommentDialogOpen}
+                  />
                 </div>
               ))
             )}

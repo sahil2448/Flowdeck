@@ -42,6 +42,7 @@ export function KanbanList({ list, activeCardId, dragHandleProps }: KanbanListPr
   const insertIndex = isOver && activeCardId ? cards.length : -1;
   const menuRef = useRef<HTMLDivElement>(null);
 
+// This piece of code sets up an event listener for the "mousedown" event on the document. When the event is triggered, it checks if the element that was clicked is not inside the menuRef element. If it is not inside the menuRef element, it sets the menuOpen state to false, effectively closing the menu. The event listener is cleaned up when the menuOpen state is changed.
   useEffect(() => {
     if (!menuOpen) return;
     function handleClick(e: MouseEvent) {
