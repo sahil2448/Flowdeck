@@ -24,6 +24,7 @@ import { TagSelector } from "./TagSelector";
 import { DueDatePicker } from "./DueDatePicker";
 import { AttachmentUploader } from "./attachmentUploader";
 import {CommentDeleteDialog} from "./CommentDeleteDialog"
+
 interface CardDetailModalProps {
   card: any;
   isOpen: boolean;
@@ -115,7 +116,6 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
     };
   }, [isOpen, card?.id, handleAttachmentAdded, handleAttachmentDeleted]);
 
-  // Due date handler
   const handleDueDateUpdate = async (newDueDate: Date | null) => {
     try {
       await updateCard(card.id, { dueDate: newDueDate });
@@ -179,7 +179,6 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
     fetchBoardMembers();
   }, [fetchBoardMembers]);
 
-  // Fetch card members
   const fetchCardMembers = useCallback(async () => {
     if (!card?.id || !boardId) {
       console.warn('Missing card ID or board ID');
@@ -194,7 +193,6 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
     }
   }, [card?.id, boardId]);
 
-  // Socket listeners for members
   useEffect(() => {
     if (!isOpen || !card?.id) return;
 
@@ -264,7 +262,6 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
     };
   }, [isOpen, card?.id]);
 
-  // Tag handlers
   const handleTagAdded = (tag: any) => {
     setTags(prev => {
       if (prev.some(t => t.id === tag.id)) return prev;
@@ -408,7 +405,6 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
     
     <DialogTitle className="sr-only">Card Details</DialogTitle>
     
-    {/* Header Section - Fixed at top */}
     <div className="px-6 py-4 border-b bg-white shrink-0">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col justify-baseline min-w-0 flex-1">
@@ -453,13 +449,10 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
       </div>
     </div>
 
-    {/* Main Content - Scrollable */}
     <div className="flex-1 overflow-y-auto px-6 py-6">
       <div className="space-y-8 pb-6">
         
-        {/* Quick Actions Bar */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Members Section */}
           <div className="flex items-center gap-2 px-3 py-1.5 border rounded-md">
             <User className="h-4 w-4 text-gray-500" />
             <MemberSelector
@@ -555,7 +548,6 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
 
         <Separator />
 
-        {/* Attachments Section */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Paperclip className="h-5 w-5 text-gray-500" />
@@ -573,14 +565,12 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
 
         <Separator />
 
-        {/* Activity / Comments Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-gray-500" />
             <h3 className="font-semibold text-gray-900">Activity</h3>
           </div>
           
-          {/* Comment Input */}
           <div className="flex gap-3">
             <Avatar className="h-8 w-8 shrink-0">
               <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">
@@ -609,48 +599,60 @@ export function CardDetailModal({ card, isOpen, onClose }: CardDetailModalProps)
           </div>
 
           <div className="space-y-4">
+            
             {comments.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">
                 No comments yet. Be the first to comment!
               </p>
             ) : (
-              comments.map((c) => (
-                <div key={c.id} className="flex gap-3 group">
-                  <Avatar className="h-8 w-8 shrink-0">
-                    <AvatarFallback className="bg-gray-100 text-gray-700 text-xs">
-                      {c.userName?.[0] || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <span className="font-semibold text-sm text-gray-900">
-                        {c.userName}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {format(new Date(c.createdAt), "MMM d 'at' h:mm a")}
-                      </span>
-                    </div>
-                    <div className="bg-white border rounded-lg px-3 py-2 text-sm text-gray-700 shadow-sm">
-                      {c.text}
-                    </div>
-                    <div className="flex gap-3 mt-1">
-                      <button 
-                        onClick={() => handleDeleteComment(c.id)}
-                        className="text-xs text-gray-500 hover:text-red-600 hover:underline"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
+              comments.map((c, index) => {
+                const showHeader = index === 0 || comments[index - 1].userId !== c.userId;
+                
+                return (
+                  <div key={c.id} className="flex gap-3 group">
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarFallback className={`bg-gray-100 text-gray-700 text-xs ${showHeader ? "" : "hidden"}`}>
+                            {showHeader && c.userName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
 
-                  <CommentDeleteDialog 
-                    open={commentDialogOpen}
-                    cardId={card.id}
-                    commentId={c.id}
-                    onOpenChange={setCommentDialogOpen}
-                  />
-                </div>
-              ))
+                    
+                    <div className="flex-1 min-w-0">
+                      {showHeader && (
+                      <div className="flex items-baseline gap-2 mb-1">
+                        <span className="font-semibold text-sm text-gray-900">
+                          {c.userName}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {format(new Date(c.createdAt), "MMM d 'at' h:mm a")}
+                        </span>
+                      </div>
+                      )}
+                      <div className="flex justify-baseline gap-2">
+
+                      <div className=" border rounded-lg px-3 py-2 text-sm text-gray-700 shadow-sm min-w-40 w-fit bg-indigo-50">
+                        {c.text}
+                      </div>
+                      <div className="flex gap-3 mt-1">
+                        <button 
+                          onClick={() => handleDeleteComment(c.id)}
+                          className="text-xs text-gray-500 hover:text-red-600 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                      </div>
+
+                    <CommentDeleteDialog 
+                      open={commentDialogOpen}
+                      cardId={card.id}
+                      commentId={c.id}
+                      onOpenChange={setCommentDialogOpen}
+                    />
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
